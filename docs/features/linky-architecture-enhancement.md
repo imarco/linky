@@ -62,6 +62,7 @@ Linky 第一阶段采用本地、文件驱动、可测试的流水线：
 - `karpathy/autoresearch`
 - `microsoft/graphrag`
 - `gusye1234/nano-graphrag`
+- `joeseesun/qiaomu-anything-to-notebooklm`
 
 ## Public Contracts
 
