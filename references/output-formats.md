@@ -2,6 +2,8 @@
 
 用户可以选择四种输出方式。默认方式可通过 `~/.config/linky/config.toml` 的 `default_output` 字段配置。
 
+输出方式只决定报告投递到哪里或以什么载体交付；输出风格决定报告怎么写。输出风格由 `output_style` 字段配置，详细规范见 `references/output-style-guide.md`。
+
 所有输出格式都应从结构化 `ReportData` 渲染，而不是各自重新解析 Markdown。这样可以保证 Markdown、Notion、Obsidian 和 Prompt 模式看到同一组字段：名称、URL、类型、访问状态、一句话结论、我的判断、建议行动、trace 摘要和研究价值。
 
 ---
@@ -37,7 +39,7 @@
 ### 文件位置
 
 - 默认：当前工作目录
-- 可通过 `config.yaml` 的 `output_dir` 配置
+- 可通过 `config.toml` 的 `output_dir` 配置
 - 用户也可以在调用时指定
 
 ### 内容
@@ -143,3 +145,10 @@ tags: ["{标签1}", "{标签2}"]
 2. 否则，首次使用时询问用户偏好，并建议保存为默认值
 3. 用户可以在任何时候通过自然语言切换输出方式（如"这次输出到 Notion"）
 4. 如果用户没有明确指定且没有配置，默认使用**单文件 Markdown**
+
+## 输出风格的选择逻辑
+
+1. 如果用户本次明确指定风格（如"用极简白话"），优先使用本次指定
+2. 否则读取 `config.toml` 中的 `output_style`
+3. 如果未配置，默认使用 `standard`
+4. 输出风格不改变输出方式；例如 `default_output = "obsidian"` 且 `output_style = "极简白话"` 表示把极简白话版本写入 Obsidian

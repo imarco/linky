@@ -65,8 +65,17 @@
     - When Markdown rendering runs
     - Then the output includes A. research overview, B. typed entries, and C. conclusions.
 
-12. **Blocked links remain visible**
+12. **Output style can render minimal plain language**
+    - Given `ReportData` with `output_style = "极简白话"`
+    - When Markdown rendering runs
+    - Then the output uses the five fixed sections: conclusion, what it said, key points, usefulness, and original link.
+
+13. **Output style definitions can be loaded**
+    - Given the built-in `explanatory` and `learning` styles
+    - When Linky resolves output style instructions
+    - Then both styles expose prompt instructions and keep the standard renderer.
+
+14. **Blocked links remain visible**
     - Given a URL fails due to login wall
     - When the final report is assembled
     - Then the URL appears with blocked status, trace summary, and limited-analysis warning.
-

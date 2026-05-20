@@ -42,7 +42,7 @@ Linky 第一阶段采用本地、文件驱动、可测试的流水线：
 4. Classification：基于 URL、metadata、正文和 domain knowledge 判断主类型。
 5. Autoresearch loop：识别信息缺口，必要时补采相关页面或标记缺口。
 6. Lightweight graph：抽取局部研究图，用于综合判断和后续扩展。
-7. Report assembly：从结构化中间数据渲染 Markdown A/B/C 报告。
+7. Report assembly：从结构化中间数据加载输出风格定义，再渲染 Markdown 报告。
 8. Output adapter：继续复用 filesystem、Obsidian、Notion、Yinxiang 等适配器。
 
 ## Reference Repositories
@@ -116,6 +116,8 @@ Edge types:
 ### ReportData
 
 Report generation should consume structured data first, then render Markdown. This keeps Markdown, Notion, Obsidian and Prompt mode consistent.
+
+Report rendering now has a separate output-style layer. `standard` keeps the A/B/C research report, while `极简白话` renders the same structured item data into a short five-part explanation: conclusion, what it said, key points, usefulness, and original link. Built-in style definitions live under `references/output-styles/*.md`; `explanatory` and `learning` expose prompt instructions while keeping the standard renderer.
 
 ## Resolved Defaults
 
