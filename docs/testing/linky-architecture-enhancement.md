@@ -10,7 +10,7 @@
 | Legacy CLI wrapper | Required | Required | Required | planned |
 | Extraction trace | Required | Optional | Required | planned |
 | Research graph | Required | Optional | Optional | planned |
-| ReportData rendering | Required | Required | Required | planned |
+| ReportData rendering | Required | Required | Required | covered: standard, 极简白话, explanatory, and learning unit tests |
 | Output adapters | Existing smoke | Optional | Optional | planned |
 
 ## P0 Release Gates
@@ -35,4 +35,3 @@
 - Adding too many providers at once can make fallback behavior difficult to reason about.
 - Full GraphRAG would add premature dependency and runtime complexity; first phase should remain JSON/file based.
 - Existing user edits in `SKILL.md` and `fetch-strategy.toml` must be preserved.
-

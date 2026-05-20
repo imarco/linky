@@ -8,7 +8,7 @@ from .contracts import ExtractionAttempt, ExtractionResult, ExtractionTrace
 from .doctor import doctor_report
 from .graph import GraphEdge, GraphNode, ResearchGraph
 from .intake import IntakeTrace, SourceArtifact, SourceInput, SourceKind, detect_source_kind, intake_source, intake_sources
-from .report import ReportData, ReportItem
+from .report import OutputStyle, ReportData, ReportItem, get_output_style_instructions, load_output_style
 from .strategy import load_strategy, resolve_provider_chain
 
 __all__ = [
@@ -19,6 +19,7 @@ __all__ = [
     "GraphEdge",
     "GraphNode",
     "ResearchGraph",
+    "OutputStyle",
     "ReportData",
     "ReportItem",
     "SourceArtifact",
@@ -28,6 +29,8 @@ __all__ = [
     "doctor_report",
     "intake_source",
     "intake_sources",
+    "get_output_style_instructions",
+    "load_output_style",
     "load_strategy",
     "resolve_provider_chain",
 ]
