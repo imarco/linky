@@ -2,7 +2,7 @@
 # Claurai ecosystem runtime state (worklog, pipeline, planning)
 .claurai/
 
-# Local reference repositories for architecture research
+# Local cloned reference repositories for architecture research; do not commit source snapshots
 refs/
 
 # Local Linky run artifacts (trace files, fixture outputs, debug sessions)

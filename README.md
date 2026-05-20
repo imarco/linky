@@ -2,7 +2,7 @@
 
 批量链接研究分析工具 —— Claude Code / Codex Skill。
 
-给一批 URL，自动逐个访问、提取正文、判断类型、按不同模板生成结构化分析报告。
+给一批 URL 或本地文本资料，自动归一化 source、提取正文、判断类型、按不同模板生成结构化分析报告。
 
 ## 授权边界
 
@@ -17,6 +17,7 @@ GPT/Codex 之间的安全调用边界见 [`references/gpt-safe-contract.md`](ref
 ## 功能
 
 - **正文提取**：Jina Reader → Trafilatura → Scrapling + html2text → WebFetch → 浏览器自动化，多级降级策略
+- **Source intake**：URL 交给现有 extraction pipeline；本地 `.md` / `.txt` 直接纳入；PDF/Office 通过可选 `markitdown` 转换
 - **类型识别**：自动分类为 Git 仓库 / 产品官网 / 文章 / 视频 / 社媒帖文 / 文档 / 平台等
 - **差异化分析**：不同类型使用不同分析卡模板（项目分析卡、产品研究卡、内容洞察卡等）
 - **多视角判断**：综合技术、产品、投资、内容创作视角给出独立判断和后续行动建议
@@ -69,14 +70,17 @@ https://dify.ai/
 Linky 仍然是本地优先的 Skill 工具，不是线上服务。当前架构分为：
 
 1. **输入归一化**：解析 URL、去重、识别用户预提取正文。
-2. **域名计划**：按域名分 batch，加载 domain metadata、授权上下文和 domain route。
-3. **Extraction**：按 `fetch-strategy.toml` 的 provider fallback 执行，输出 `ExtractionResult` 和 `ExtractionTrace`。
-4. **Classification**：基于 URL、metadata、正文和域名知识判断主类型。
-5. **Autoresearch loop**：执行 `plan → extract/analyze → critique → gap detection → optional补采 → final synthesis`，用于发现缺口和补采。
-6. **ResearchGraph**：用轻量 JSON 图记录 `url/document/entity/topic/claim/action` 节点和 typed edges，不引入图数据库或向量库。
-7. **ReportData → Markdown**：先形成结构化中间数据，再渲染 Markdown、Notion、Obsidian 或 Prompt 模式。
+2. **Source intake**：把 URL、本地 Markdown/text、可转换文档归一化为 `SourceArtifact`，并记录 intake trace。
+3. **域名计划**：按域名分 batch，加载 domain metadata、授权上下文和 domain route。
+4. **Extraction**：按 `fetch-strategy.toml` 的 provider fallback 执行，输出 `ExtractionResult` 和 `ExtractionTrace`。
+5. **Classification**：基于 URL、metadata、正文和域名知识判断主类型。
+6. **Autoresearch loop**：执行 `plan → extract/analyze → critique → gap detection → optional补采 → final synthesis`，用于发现缺口和补采。
+7. **ResearchGraph**：用轻量 JSON 图记录 `url/document/entity/topic/claim/action` 节点和 typed edges，不引入图数据库或向量库。
+8. **ReportData → Markdown**：先形成结构化中间数据，再渲染 Markdown、Notion、Obsidian 或 Prompt 模式。
 
-Firecrawl、Crawl4AI、GraphRAG、GPT Researcher 等项目会放在本地 `refs/` 目录中作为架构参考。Firecrawl 不作为默认 runtime dependency；只有未来显式配置 provider 时才会调用外部服务。
+Firecrawl、Crawl4AI、GraphRAG、GPT Researcher、Anything-to-NotebookLM 等项目会放在本地 `refs/` 目录中作为架构参考。Firecrawl 不作为默认 runtime dependency；只有未来显式配置 provider 时才会调用外部服务。
+
+腾讯 ima、NotebookLM、Feishu 记录为未来 output target 候选，见 [`references/output-targets.md`](references/output-targets.md)。它们不会作为当前默认 runtime dependency。
 
 ## 示例输出
 
