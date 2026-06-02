@@ -20,6 +20,9 @@ def provider_config(strategy: dict[str, Any], provider_id: str) -> dict[str, Any
     for item in strategy.get("fallback_chain", []):
         if item.get("id") == provider_id:
             return dict(item)
+    providers = strategy.get("providers", {})
+    if isinstance(providers, dict) and isinstance(providers.get(provider_id), dict):
+        return dict(providers[provider_id])
     return {}
 
 

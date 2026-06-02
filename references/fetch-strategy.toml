@@ -104,9 +104,32 @@ requires = ["playwright-cli"]           # npm 全局依赖
 #   playwright-cli type <text>          输入文本
 #   playwright-cli --persistent         跨调用保持本地浏览器上下文
 
+# ── 专用 Provider 配置────────────────────────────────
+# 这些 provider 不进入通用 fallback_chain，只通过 domain_routes 定向启用。
+
+[providers.vxtwitter]
+name = "vxTwitter / FixTweet JSON API"
+method = "json-api"
+api_pattern = "https://api.fxtwitter.com/status/{tweet_id}"
+id_only_api_pattern = "https://api.fxtwitter.com/status/{tweet_id}"
+best_for = "公开 X/Twitter status URL、带媒体的 tweet、部分 X Article payload"
+notes = "第三方抓取服务；FixTweet status endpoint 对 X Article content.blocks 更完整，失败时必须继续 fallback；不保证投票、私密内容或全部长文类型稳定可用"
+
 # ── 域名快捷路由 ──────────────────────────────────────
 # 命中的域名直接跳到指定方案，不走标准降级链
 # skip_layers: 跳过这些层（节省配额或避免已知失败）
+
+[[domain_routes]]
+pattern = "x.com"
+go_to = "vxtwitter"
+skip_layers = ["jina"]
+reason = "X/Twitter 公开 status 优先使用 vxTwitter/FixTweet JSON API，失败后再走通用抓取层"
+
+[[domain_routes]]
+pattern = "twitter.com"
+go_to = "vxtwitter"
+skip_layers = ["jina"]
+reason = "Twitter 公开 status 优先使用 vxTwitter/FixTweet JSON API，失败后再走通用抓取层"
 
 [[domain_routes]]
 pattern = "mp.weixin.qq.com"
