@@ -1,4 +1,5 @@
 from scripts.linky.report import normalize_output_style, STUDY_OUTPUT_STYLE
+from scripts.linky.html_card import render_html_card
 from scripts.linky.study import (
     extract_concepts,
     generate_cognitive_map,
@@ -85,3 +86,35 @@ def test_build_study_card_data():
     assert card["title"] == "Test Post"
     assert card["source_url"] == "https://example.com/post"
     assert len(card["concepts"]) >= 1
+
+
+def test_end_to_end_study_card():
+    """Integration test: extraction result → study card data → HTML card."""
+    extraction = {
+        "url": "https://docs.python.org/3/library/asyncio.html",
+        "markdown": (
+            "# asyncio — Asynchronous I/O\n\n"
+            "asyncio is a library for writing concurrent code.\n\n"
+            "## Coroutines\n\n"
+            "Coroutines declared with async/await syntax.\n\n"
+            "## Event Loop\n\n"
+            "The event loop is the core of asyncio.\n\n"
+            "## Tasks\n\n"
+            "Tasks are used to schedule coroutines concurrently."
+        ),
+        "metadata": {"title": "asyncio — Asynchronous I/O"},
+    }
+
+    card_data = build_study_card_data(extraction)
+
+    assert card_data["title"] == "asyncio — Asynchronous I/O"
+    assert card_data["source_url"] == "https://docs.python.org/3/library/asyncio.html"
+    assert card_data["content_type"] == "tutorial"
+    assert len(card_data["concepts"]) >= 2
+    assert "graph" in card_data["cognitive_map"]
+    assert len(card_data["faq"]) >= 3
+
+    html = render_html_card(card_data)
+    assert "<!DOCTYPE html>" in html
+    assert "asyncio" in html
+    assert "cdn" not in html.lower()
