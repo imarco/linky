@@ -9,6 +9,7 @@ STANDARD_OUTPUT_STYLE = "standard"
 MINIMAL_PLAIN_OUTPUT_STYLE = "minimal_plain"
 EXPLANATORY_OUTPUT_STYLE = "explanatory"
 LEARNING_OUTPUT_STYLE = "learning"
+STUDY_OUTPUT_STYLE = "study"
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _BUILTIN_STYLE_DIR = _REPO_ROOT / "references" / "output-styles"
@@ -32,6 +33,12 @@ _STYLE_ALIASES = {
     "Learning": LEARNING_OUTPUT_STYLE,
     "学习型": LEARNING_OUTPUT_STYLE,
     "学习": LEARNING_OUTPUT_STYLE,
+    "study": STUDY_OUTPUT_STYLE,
+    "Study": STUDY_OUTPUT_STYLE,
+    "study-card": STUDY_OUTPUT_STYLE,
+    "study_card": STUDY_OUTPUT_STYLE,
+    "学习卡片": STUDY_OUTPUT_STYLE,
+    "知识卡片": STUDY_OUTPUT_STYLE,
 }
 
 

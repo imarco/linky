@@ -1,0 +1,23 @@
+{
+  "skill_name": "linky-study",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "帮我学习这篇 asyncio 文档 https://docs.python.org/3/library/asyncio.html",
+      "expected_output": "Markdown 深度笔记 + 交互式 HTML 知识卡片，包含认知地图和 FAQ",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "study these 3 links about Redis: https://redis.io/docs/latest/ https://redis.io/docs/latest/develop/ https://redis.io/docs/latest/operate/",
+      "expected_output": "3 个独立知识卡片 + 交叉分析文档",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "深度阅读这篇论文 https://arxiv.org/abs/1706.03762 做学习笔记",
+      "expected_output": "学术论文风格的知识卡片，包含方法论、发现、局限性分析",
+      "files": []
+    }
+  ]
+}

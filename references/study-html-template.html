@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{TITLE}}</title>
+<style>
+:root {
+  --bg: #1a1b26; --fg: #c0caf5; --card-bg: #24283b; --accent: #7aa2f7;
+  --muted: #565f89; --border: #3b4261; --code-bg: #1f2335;
+  --tag-verified: #9ece6a; --tag-disputed: #e0af68; --tag-outdated: #f7768e; --tag-pending: #bb9af7;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f5f5f5; --fg: #1a1b26; --card-bg: #ffffff; --accent: #2e7de9;
+    --muted: #9699a3; --border: #d0d0d0; --code-bg: #f0f0f0;
+    --tag-verified: #587539; --tag-disputed: #8f5e15; --tag-outdated: #c4432b; --tag-pending: #7847bd;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--fg); line-height: 1.7; }
+.container { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+header { margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem; }
+header h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
+.meta { color: var(--muted); font-size: 0.85rem; }
+.meta a { color: var(--accent); text-decoration: none; }
+section { margin-bottom: 2rem; }
+section h2 { font-size: 1.3rem; margin-bottom: 0.8rem; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 0.3rem; }
+section h3 { font-size: 1.1rem; margin: 1rem 0 0.5rem; }
+.card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.2rem; margin-bottom: 0.8rem; }
+.concept h3 { color: var(--accent); margin-bottom: 0.3rem; }
+.claim { margin-bottom: 0.6rem; }
+.tag { display: inline-block; padding: 0.1rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+.tag-verified { background: var(--tag-verified); color: #fff; }
+.tag-disputed { background: var(--tag-disputed); color: #fff; }
+.tag-outdated { background: var(--tag-outdated); color: #fff; }
+.tag-pending { background: var(--tag-pending); color: #fff; }
+pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; padding: 1rem; overflow-x: auto; margin: 0.8rem 0; font-size: 0.9rem; }
+code { font-family: 'SF Mono', 'Fira Code', monospace; }
+.code-annotation { color: var(--muted); font-size: 0.85rem; font-style: italic; margin-bottom: 0.8rem; }
+.faq-item { margin-bottom: 1rem; }
+.faq-item h3 { color: var(--fg); font-size: 1rem; }
+.faq-item p { color: var(--muted); margin-top: 0.2rem; }
+ul { padding-left: 1.5rem; }
+li { margin-bottom: 0.3rem; }
+a { color: var(--accent); }
+.search-box { width: 100%; padding: 0.6rem 1rem; background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; color: var(--fg); font-size: 0.95rem; margin-bottom: 1.5rem; }
+.search-box:focus { outline: none; border-color: var(--accent); }
+.sidebar { position: fixed; top: 2rem; right: 2rem; max-width: 200px; font-size: 0.8rem; }
+.sidebar a { display: block; padding: 0.2rem 0; color: var(--muted); text-decoration: none; }
+.sidebar a:hover { color: var(--accent); }
+.theme-toggle { position: fixed; bottom: 1rem; right: 1rem; background: var(--card-bg); border: 1px solid var(--border); border-radius: 50%; width: 36px; height: 36px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+.mermaid { background: var(--card-bg); border-radius: 8px; padding: 1rem; margin: 1rem 0; text-align: center; }
+@media (max-width: 768px) { .sidebar { display: none; } .container { padding: 1rem; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>{{TITLE}}</h1>
+    <div class="meta">
+      Source: <a href="{{SOURCE_URL}}">{{SOURCE_URL}}</a> |
+      Type: {{CONTENT_TYPE}} |
+      Date: {{DATE}}
+    </div>
+  </header>
+
+  <input type="text" class="search-box" placeholder="Search content..." id="searchInput">
+
+  <section id="overview">
+    <h2>Overview</h2>
+    <p>{{OVERVIEW}}</p>
+  </section>
+
+  <section id="concepts">
+    <h2>Core Concepts</h2>
+    {{CONCEPTS}}
+  </section>
+
+  <section id="cognitive-map">
+    <h2>Cognitive Map</h2>
+    <div class="mermaid">
+{{COGNITIVE_MAP}}
+    </div>
+  </section>
+
+  <section id="claims">
+    <h2>Key Claims & Evidence</h2>
+    {{CLAIMS}}
+  </section>
+
+  <section id="code-examples">
+    <h2>Code Examples</h2>
+    {{CODE_EXAMPLES}}
+  </section>
+
+  <section id="faq">
+    <h2>FAQ</h2>
+    {{FAQ}}
+  </section>
+
+  <section id="further-reading">
+    <h2>Further Reading</h2>
+    <ul>
+{{FURTHER_READING}}
+    </ul>
+  </section>
+</div>
+
+<nav class="sidebar" id="toc"></nav>
+<button class="theme-toggle" id="themeToggle" title="Toggle theme">🌓</button>
+
+<script>
+/* Mermaid.js — inline minified bundle for offline use. */
+{{MERMAID_JS}}
+</script>
+
+<script>
+/* Prism.js — inline minified bundle for code highlighting. */
+{{PRISM_JS}}
+</script>
+
+<script>
+// Theme toggle
+const toggle = document.getElementById('themeToggle');
+toggle.addEventListener('click', () => {
+  const html = document.documentElement;
+  const current = getComputedStyle(html).getPropertyValue('--bg').trim();
+  if (current === '#1a1b26') {
+    html.style.setProperty('--bg', '#f5f5f5'); html.style.setProperty('--fg', '#1a1b26');
+    html.style.setProperty('--card-bg', '#ffffff'); html.style.setProperty('--accent', '#2e7de9');
+    html.style.setProperty('--muted', '#9699a3'); html.style.setProperty('--border', '#d0d0d0');
+    html.style.setProperty('--code-bg', '#f0f0f0');
+  } else {
+    html.style.setProperty('--bg', '#1a1b26'); html.style.setProperty('--fg', '#c0caf5');
+    html.style.setProperty('--card-bg', '#24283b'); html.style.setProperty('--accent', '#7aa2f7');
+    html.style.setProperty('--muted', '#565f89'); html.style.setProperty('--border', '#3b4261');
+    html.style.setProperty('--code-bg', '#1f2335');
+  }
+});
+
+// Search filter
+const searchInput = document.getElementById('searchInput');
+searchInput.addEventListener('input', (e) => {
+  const q = e.target.value.toLowerCase();
+  document.querySelectorAll('section').forEach(s => {
+    if (s.id === 'overview' || !q) { s.style.display = ''; return; }
+    s.style.display = s.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+});
+
+// TOC
+const toc = document.getElementById('toc');
+document.querySelectorAll('section h2').forEach(h2 => {
+  const a = document.createElement('a');
+  a.href = '#' + h2.parentElement.id;
+  a.textContent = h2.textContent;
+  toc.appendChild(a);
+});
+
+// Init Mermaid if loaded
+if (typeof mermaid !== 'undefined') {
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+}
+</script>
+</body>
+</html>
