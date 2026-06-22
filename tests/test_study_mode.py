@@ -118,3 +118,35 @@ def test_end_to_end_study_card():
     assert "<!DOCTYPE html>" in html
     assert "asyncio" in html
     assert "cdn" not in html.lower()
+
+
+def test_extract_concepts_empty_content():
+    """Edge case: empty markdown returns no concepts."""
+    assert extract_concepts("") == []
+    assert extract_concepts("# Just a heading\n") == []
+
+
+def test_extract_concepts_no_headings():
+    """Edge case: content with no headings returns no concepts."""
+    markdown = "Just some plain text without any headings."
+    assert extract_concepts(markdown) == []
+
+
+def test_extract_concepts_respects_cap():
+    """Edge case: concept extraction caps at 15."""
+    headings = "\n".join(f"## Concept {i}\nDefinition {i}." for i in range(20))
+    concepts = extract_concepts(headings)
+    assert len(concepts) <= 15
+
+
+def test_classify_content_type_fallback():
+    """Edge case: unknown domain falls back to technical."""
+    assert classify_content_type("https://random-site.com/page", {}) == "technical"
+
+
+def test_build_study_card_data_empty_extraction():
+    """Edge case: empty extraction produces valid card data."""
+    card = build_study_card_data({"url": "", "markdown": "", "metadata": {}})
+    assert card["title"] == ""
+    assert card["concepts"] == []
+    assert card["cognitive_map"] == "graph LR\n  A[No concepts extracted]"
