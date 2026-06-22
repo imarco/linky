@@ -6,6 +6,7 @@ from scripts.linky.study import (
     classify_content_type,
     generate_faq,
     build_study_card_data,
+    _title_from_url,
 )
 
 
@@ -150,3 +151,38 @@ def test_build_study_card_data_empty_extraction():
     assert card["title"] == ""
     assert card["concepts"] == []
     assert card["cognitive_map"] == "graph LR\n  A[No concepts extracted]"
+
+
+def test_title_from_url_with_path():
+    """_title_from_url extracts title from URL path."""
+    assert _title_from_url("https://example.com/my-cool-article") == "My Cool Article"
+
+
+def test_title_from_url_with_underscores():
+    """_title_from_url converts underscores to spaces."""
+    assert _title_from_url("https://example.com/my_cool_article") == "My Cool Article"
+
+
+def test_title_from_url_root_only():
+    """_title_from_url falls back to domain for root URLs."""
+    assert _title_from_url("https://example.com") == "example.com"
+
+
+def test_classify_content_type_metadata_academic():
+    """classify uses metadata title keywords as fallback."""
+    assert classify_content_type("https://random.com/page", {"title": "A Research Paper on AI"}) == "academic"
+
+
+def test_classify_content_type_metadata_tutorial():
+    assert classify_content_type("https://random.com/page", {"title": "How to Guide: Step by Step"}) == "tutorial"
+
+
+def test_classify_content_type_metadata_blog():
+    assert classify_content_type("https://random.com/page", {"title": "My Blog Post About Life"}) == "blog"
+
+
+def test_generate_cognitive_map_single_concept():
+    """Single concept returns placeholder graph."""
+    concepts = [{"name": "Redis", "definition": "In-memory store"}]
+    mermaid = generate_cognitive_map(concepts)
+    assert "No concepts" in mermaid
