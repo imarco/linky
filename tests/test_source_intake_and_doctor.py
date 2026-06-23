@@ -139,14 +139,14 @@ class DoctorTests(unittest.TestCase):
 
     def test_doctor_cli_help_is_compatible(self):
         proc = subprocess.run(
-            [sys.executable, str(ROOT / "scripts" / "linky_doctor.py"), "--help"],
+            [str(ROOT / "bin" / "linky-doctor"), "--help"],
             check=False,
             text=True,
             capture_output=True,
         )
 
         self.assertEqual(proc.returncode, 0)
-        self.assertIn("linky_doctor.py", proc.stdout)
+        self.assertIn("linky-doctor", proc.stdout)
 
 
 if __name__ == "__main__":

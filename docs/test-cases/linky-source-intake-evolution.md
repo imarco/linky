@@ -57,7 +57,7 @@
    - Then doctor reports `missing` and preserves the provider entry.
 
 11. **Doctor CLI help**
-    - Given `scripts/linky_doctor.py --help`
+    - Given `bin/linky-doctor --help`
     - When called directly
     - Then it exits successfully and prints usage text.
 

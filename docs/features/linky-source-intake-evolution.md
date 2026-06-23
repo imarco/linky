@@ -20,7 +20,7 @@
 - `.md` / `.txt` 本地文件直接读入 `SourceArtifact`。
 - PDF/Office 文件通过 optional `markitdown` 转换；缺失依赖时返回 `missing_dependency`，不让 batch 崩溃。
 - 定义 `SourceInput`、`SourceArtifact`、`SourceKind`、`IntakeTrace`，并提供 `intake_source` / `intake_sources` 调用入口。
-- 新增 doctor 能力和 `scripts/linky_doctor.py` CLI，报告 extraction providers、optional Python modules、外部 CLI/commands 的 ready/missing/disabled 状态。
+- 新增 doctor 能力和 `bin/linky-doctor` CLI，报告 extraction providers、optional Python modules、外部 CLI/commands 的 ready/missing/disabled 状态。
 - 更新 docs/test/testing matrix，明确 future output targets 和 future paywall access research track。
 
 ### Out of Scope
