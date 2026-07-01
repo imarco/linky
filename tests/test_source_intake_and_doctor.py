@@ -130,12 +130,39 @@ class DoctorTests(unittest.TestCase):
             ROOT / "references" / "fetch-strategy.toml",
             module_checker=lambda name: True,
             command_checker=lambda name: True,
+            config_checker=lambda name: True,
         )
 
         provider_ids = [item["id"] for item in report["providers"]]
         self.assertIn("jina", provider_ids)
         self.assertIn("scrapling", provider_ids)
+        self.assertIn("youtube_ytdlp", provider_ids)
         self.assertEqual(report["status"], "ready")
+
+    def test_doctor_checks_dedicated_provider_requirements(self):
+        strategy = {
+            "fallback_chain": [{"id": "jina"}],
+            "providers": {
+                "youtube_ytdlp": {"requires": ["yt-dlp", "node-or-deno"]},
+                "rss_feedparser": {"requires": ["feedparser"]},
+                "v2ex_api": {"requires": []},
+                "exa_search": {"requires": ["mcporter", "exa-mcp-config"]},
+            },
+        }
+
+        report = doctor_report(
+            strategy=strategy,
+            module_checker=lambda name: name == "feedparser",
+            command_checker=lambda name: name == "yt-dlp",
+            config_checker=lambda name: False,
+        )
+
+        providers = {item["id"]: item for item in report["providers"]}
+        self.assertEqual(providers["youtube_ytdlp"]["status"], "missing")
+        self.assertIn("node-or-deno", providers["youtube_ytdlp"]["missing"])
+        self.assertEqual(providers["rss_feedparser"]["status"], "ready")
+        self.assertEqual(providers["v2ex_api"]["status"], "ready")
+        self.assertIn("exa-mcp-config", providers["exa_search"]["missing"])
 
     def test_doctor_cli_help_is_compatible(self):
         proc = subprocess.run(
@@ -147,6 +174,28 @@ class DoctorTests(unittest.TestCase):
 
         self.assertEqual(proc.returncode, 0)
         self.assertIn("linky_doctor.py", proc.stdout)
+
+    def test_bin_linky_doctor_help(self):
+        proc = subprocess.run(
+            [str(ROOT / "bin" / "linky-doctor"), "--help"],
+            check=False,
+            text=True,
+            capture_output=True,
+        )
+
+        self.assertEqual(proc.returncode, 0)
+        self.assertIn("linky_doctor.py", proc.stdout)
+
+    def test_bin_install_check_help(self):
+        proc = subprocess.run(
+            [str(ROOT / "bin" / "install"), "--help"],
+            check=False,
+            text=True,
+            capture_output=True,
+        )
+
+        self.assertEqual(proc.returncode, 0)
+        self.assertIn("Linky dependency installer", proc.stdout)
 
 
 if __name__ == "__main__":

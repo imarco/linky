@@ -115,6 +115,127 @@ id_only_api_pattern = "https://api.fxtwitter.com/status/{tweet_id}"
 best_for = "公开 X/Twitter status URL、带媒体的 tweet、部分 X Article payload"
 notes = "第三方抓取服务；FixTweet status endpoint 对 X Article content.blocks 更完整，失败时必须继续 fallback；不保证投票、私密内容或全部长文类型稳定可用"
 
+[providers.youtube_ytdlp]
+name = "YouTube yt-dlp"
+method = "command-json"
+role = "transcript"
+command = "yt-dlp --dump-single-json --skip-download --write-auto-subs --sub-lang {sub_lang} {url}"
+best_for = "YouTube metadata, captions, subtitles, and transcript extraction"
+notes = "Requires yt-dlp plus node or deno for current YouTube extraction paths"
+requires = ["yt-dlp", "node-or-deno"]
+
+[providers.github_gh]
+name = "GitHub gh CLI"
+method = "command-json"
+role = "structured-url-reader"
+best_for = "GitHub repositories, issues, pull requests, releases, and code search"
+requires = ["gh"]
+
+[providers.rss_feedparser]
+name = "RSS feedparser"
+method = "python"
+role = "feed"
+best_for = "RSS and Atom feeds"
+requires = ["feedparser"]
+
+[providers.exa_search]
+name = "Exa Search via mcporter"
+method = "mcp-command"
+role = "search-only"
+best_for = "Research follow-up search and code context lookup"
+requires = ["mcporter", "exa-mcp-config"]
+
+[providers.v2ex_api]
+name = "V2EX public API"
+method = "json-api"
+role = "structured-url-reader"
+best_for = "V2EX topics, nodes, replies, and users"
+requires = []
+
+[providers.bilibili_cli]
+name = "Bilibili bili-cli"
+method = "command-json"
+role = "structured-url-reader"
+best_for = "Bilibili search, hot/ranking, and video detail"
+requires = ["bili"]
+
+[providers.opencli_bilibili]
+name = "OpenCLI Bilibili"
+method = "command-yaml"
+role = "user-visible-session"
+best_for = "Bilibili subtitles through browser session"
+requires = ["opencli"]
+
+[providers.twitter_cli]
+name = "twitter-cli"
+method = "command-json"
+role = "user-visible-session"
+best_for = "X/Twitter search, timeline, articles, and threads"
+requires = ["twitter"]
+
+[providers.opencli_twitter]
+name = "OpenCLI Twitter"
+method = "command-yaml"
+role = "user-visible-session"
+best_for = "Twitter through user's Chrome session"
+requires = ["opencli"]
+
+[providers.opencli_reddit]
+name = "OpenCLI Reddit"
+method = "command-yaml"
+role = "user-visible-session"
+best_for = "Reddit search, posts, comments through browser session"
+requires = ["opencli"]
+
+[providers.rdt_cli]
+name = "rdt-cli"
+method = "command-json"
+role = "user-visible-session"
+best_for = "Reddit search and post reading with imported saved sessions"
+requires = ["rdt"]
+
+[providers.opencli_xhs]
+name = "OpenCLI XiaoHongShu"
+method = "command-yaml"
+role = "user-visible-session"
+best_for = "XiaoHongShu desktop reading through Chrome session"
+requires = ["opencli"]
+
+[providers.xiaohongshu_mcp]
+name = "xiaohongshu-mcp"
+method = "mcp-command"
+role = "user-visible-session"
+best_for = "XiaoHongShu server/headless reading after QR login"
+requires = ["mcporter", "xiaohongshu-mcp-service"]
+
+[providers.xhs_cli]
+name = "xhs-cli legacy"
+method = "command-json"
+role = "user-visible-session"
+best_for = "Existing xhs-cli installs only"
+requires = ["xhs"]
+
+[providers.linkedin_mcp]
+name = "LinkedIn MCP"
+method = "mcp-command"
+role = "user-visible-session"
+best_for = "LinkedIn profile, company, and job search"
+requires = ["mcporter", "linkedin-mcp-config"]
+
+[providers.xueqiu_api]
+name = "Xueqiu API"
+method = "json-api"
+role = "user-visible-session"
+best_for = "Xueqiu stock quotes, search, hot posts, and hot stocks"
+requires = ["xueqiu-session"]
+
+[providers.xiaoyuzhou_transcript]
+name = "Xiaoyuzhou transcript"
+method = "command-transcript"
+role = "transcript"
+best_for = "Xiaoyuzhou podcast audio transcription"
+requires = ["ffmpeg", "transcription-provider"]
+
 # ── 域名快捷路由 ──────────────────────────────────────
 # 命中的域名直接跳到指定方案，不走标准降级链
 # skip_layers: 跳过这些层（节省配额或避免已知失败）
@@ -132,6 +253,66 @@ skip_layers = ["jina"]
 reason = "Twitter 公开 status 优先使用 vxTwitter/FixTweet JSON API，失败后再走通用抓取层"
 
 [[domain_routes]]
+pattern = "youtube.com"
+go_to = "youtube_ytdlp"
+skip_layers = ["jina", "trafilatura", "scrapling", "webfetch"]
+reason = "YouTube content is better extracted through yt-dlp metadata and subtitle APIs"
+
+[[domain_routes]]
+pattern = "youtu.be"
+go_to = "youtube_ytdlp"
+skip_layers = ["jina", "trafilatura", "scrapling", "webfetch"]
+reason = "YouTube short URLs should use yt-dlp provider"
+
+[[domain_routes]]
+pattern = "github.com"
+go_to = "github_gh"
+skip_layers = []
+reason = "GitHub structured data is available through gh CLI before webpage fallback"
+
+[[domain_routes]]
+pattern = "bilibili.com"
+go_to = "bilibili_cli"
+skip_layers = ["jina", "trafilatura", "scrapling", "webfetch", "youtube_ytdlp"]
+reason = "Bilibili should use bili-cli or OpenCLI, not yt-dlp"
+
+[[domain_routes]]
+pattern = "v2ex.com"
+go_to = "v2ex_api"
+skip_layers = ["jina"]
+reason = "V2EX public JSON APIs provide structured topic and reply data"
+
+[[domain_routes]]
+pattern = "reddit.com"
+go_to = "opencli_reddit"
+skip_layers = ["jina", "trafilatura", "scrapling", "webfetch"]
+reason = "Reddit requires user-visible login for reliable reading"
+
+[[domain_routes]]
+pattern = "xhslink.com"
+go_to = "opencli_xhs"
+skip_layers = ["jina", "trafilatura", "scrapling", "webfetch"]
+reason = "XiaoHongShu short links require session-aware providers"
+
+[[domain_routes]]
+pattern = "linkedin.com"
+go_to = "linkedin_mcp"
+skip_layers = []
+reason = "LinkedIn public pages may fallback to Jina, full profile/job data needs MCP"
+
+[[domain_routes]]
+pattern = "xueqiu.com"
+go_to = "xueqiu_api"
+skip_layers = ["jina", "trafilatura", "scrapling", "webfetch"]
+reason = "Xueqiu structured data is available through session-aware APIs"
+
+[[domain_routes]]
+pattern = "xiaoyuzhoufm.com"
+go_to = "xiaoyuzhou_transcript"
+skip_layers = ["jina", "trafilatura", "scrapling", "webfetch"]
+reason = "Podcast value comes from audio transcript extraction"
+
+[[domain_routes]]
 pattern = "mp.weixin.qq.com"
 go_to = "scrapling"
 skip_layers = ["jina"]
@@ -139,9 +320,9 @@ reason = "微信公开正文适合使用专用正文选择器读取"
 
 [[domain_routes]]
 pattern = "xiaohongshu.com"
-go_to = "browser"
+go_to = "opencli_xhs"
 skip_layers = ["jina", "scrapling", "webfetch"]
-reason = "内容通常需要用户本人浏览器可见后读取"
+reason = "小红书内容通常需要用户本人浏览器可见后读取"
 
 [[domain_routes]]
 pattern = "weibo.com"
