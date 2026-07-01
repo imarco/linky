@@ -34,7 +34,7 @@
 **Included (v1):**
 - 作为 linky 的 `--mode=study` 输出模式扩展
 - 输入：复用 linky 的 URL/PDF/文档输入机制
-- 处理：linky 内容提取 + scrapling_fetch.py 反爬虫 → study 模式分析流水线
+- 处理：linky 内容提取 + scrapling_fetch.py 动态页面处理 → study 模式分析流水线
 - 输出：`<name>.md`（深度笔记）+ `<name>.interactive.html`（交互式知识卡片）
 - 卡片功能：搜索过滤、Mermaid 认知地图、代码高亮、暗/亮模式切换
 - 真理锚定：通过 web search 验证关键断言
@@ -85,6 +85,6 @@ outputs/study-<timestamp>/
 | Date | Decision | Alternatives | Rationale |
 |---|---|---|---|
 | 2026-06-19 | linky 扩展模式（`--mode=study`）| A: 独立 skill + linky 脚本; B: 完全独立实现 | 一个工具、一个触发点、全部基础设施复用 |
-| 2026-06-19 | 内容提取使用 linky Python 脚本 | 仅 Claude 原生工具 | scrapling_fetch.py 提供 JS 渲染和反爬虫能力 |
+| 2026-06-19 | 内容提取使用 linky Python 脚本 | 仅 Claude 原生工具 | scrapling_fetch.py 提供 JS 渲染和动态页面处理能力 |
 | 2026-06-19 | v1 不含 Mentor Mode | 完整实现 Mentor Mode | 降低复杂度，v1 聚焦核心知识卡片 |
 | 2026-06-19 | HTML 卡片完全离线 | 允许 CDN | 学习材料需要任何环境可用 |
