@@ -11,6 +11,13 @@ from typing import Any, Callable
 from urllib.parse import quote, urlparse
 
 from .contracts import ExtractionAttempt, ExtractionResult, ExtractionTrace
+from .providers.platforms import (
+    feed_to_markdown,
+    github_item_to_markdown,
+    github_repo_to_markdown,
+    v2ex_topic_to_markdown,
+    youtube_info_to_markdown,
+)
 from .quality import score_markdown
 from .strategy import load_strategy, provider_config, quality_threshold, resolve_provider_chain
 
@@ -348,6 +355,115 @@ def _command_provider(url: str, provider: dict[str, Any], strategy: dict[str, An
     return {"markdown": proc.stdout[:max_chars], "metadata": {"command": rendered}}
 
 
+def _youtube_ytdlp_provider(url: str, provider: dict[str, Any], strategy: dict[str, Any]) -> dict[str, Any]:
+    timeout = int(strategy.get("global", {}).get("timeout_seconds", 15))
+    info = _run_json_command(["yt-dlp", "--dump-single-json", "--skip-download", url], timeout)
+    markdown, metadata = youtube_info_to_markdown(info)
+    return {"markdown": markdown, "metadata": {**metadata, "provider": "youtube_ytdlp"}}
+
+
+def _github_gh_provider(url: str, provider: dict[str, Any], strategy: dict[str, Any]) -> dict[str, Any]:
+    timeout = int(strategy.get("global", {}).get("timeout_seconds", 15))
+    owner, repo, kind, number = _github_parts(url)
+    repo_name = f"{owner}/{repo}"
+    if kind == "pull":
+        payload = _run_json_command(
+            ["gh", "pr", "view", number, "--repo", repo_name, "--json", "title,body,url,author,number,state"],
+            timeout,
+        )
+        markdown, metadata = github_item_to_markdown(payload)
+    elif kind == "issues":
+        payload = _run_json_command(
+            ["gh", "issue", "view", number, "--repo", repo_name, "--json", "title,body,url,author,number,state"],
+            timeout,
+        )
+        markdown, metadata = github_item_to_markdown(payload)
+    else:
+        payload = _run_json_command(
+            ["gh", "repo", "view", repo_name, "--json", "nameWithOwner,description,url,stargazerCount,primaryLanguage"],
+            timeout,
+        )
+        markdown, metadata = github_repo_to_markdown(payload)
+    return {"markdown": markdown, "metadata": {**metadata, "provider": "github_gh"}}
+
+
+def _rss_feedparser_provider(url: str, provider: dict[str, Any], strategy: dict[str, Any]) -> dict[str, Any]:
+    try:
+        import feedparser
+    except ImportError as exc:
+        raise RuntimeError("feedparser is not installed") from exc
+
+    parsed = feedparser.parse(url)
+    markdown, metadata = feed_to_markdown(parsed)
+    return {"markdown": markdown, "metadata": {**metadata, "provider": "rss_feedparser"}}
+
+
+def _v2ex_api_provider(url: str, provider: dict[str, Any], strategy: dict[str, Any]) -> dict[str, Any]:
+    topic_id = _v2ex_topic_id(url)
+    timeout = int(strategy.get("global", {}).get("timeout_seconds", 15))
+    topic_payload = _fetch_json(f"https://www.v2ex.com/api/topics/show.json?id={quote(topic_id)}", timeout)
+    if isinstance(topic_payload, list):
+        if not topic_payload:
+            raise RuntimeError("V2EX topic API returned no topic")
+        topic = topic_payload[0]
+    else:
+        topic = topic_payload
+    if not isinstance(topic, dict):
+        raise RuntimeError("V2EX topic API returned an unexpected JSON shape")
+
+    replies = _fetch_json(f"https://www.v2ex.com/api/replies/show.json?topic_id={quote(topic_id)}", timeout)
+    if isinstance(replies, list):
+        topic = {**topic, "replies": replies}
+    markdown, metadata = v2ex_topic_to_markdown(topic)
+    return {"markdown": markdown, "metadata": {**metadata, "provider": "v2ex_api"}}
+
+
+def _missing_or_unconfigured_provider(requirement: str) -> ProviderFn:
+    def provider(url: str, provider_config: dict[str, Any], strategy: dict[str, Any]) -> dict[str, Any]:
+        raise RuntimeError(f"{requirement} is missing or not configured")
+
+    return provider
+
+
+def _run_json_command(args: list[str], timeout: int) -> dict[str, Any]:
+    proc = subprocess.run(args, check=False, text=True, capture_output=True, timeout=timeout)
+    if proc.returncode != 0:
+        message = proc.stderr.strip() or proc.stdout.strip() or f"command exited {proc.returncode}"
+        raise RuntimeError(message)
+    try:
+        payload = json.loads(proc.stdout)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"{args[0]} returned non-JSON content") from exc
+    if not isinstance(payload, dict):
+        raise RuntimeError(f"{args[0]} returned an unexpected JSON shape")
+    return payload
+
+
+def _fetch_json(url: str, timeout: int) -> Any:
+    request = urllib.request.Request(url, headers={"Accept": "application/json", "User-Agent": "Linky/1.0"})
+    with urllib.request.urlopen(request, timeout=timeout) as resp:
+        body = resp.read().decode("utf-8", errors="replace")
+    return json.loads(body)
+
+
+def _github_parts(url: str) -> tuple[str, str, str | None, str]:
+    parsed = urlparse(url)
+    parts = [part for part in parsed.path.split("/") if part]
+    if len(parts) < 2:
+        raise RuntimeError(f"not a GitHub repository URL: {url}")
+    owner, repo = parts[0], parts[1]
+    if len(parts) >= 4 and parts[2] in {"issues", "pull"}:
+        return owner, repo, parts[2], parts[3]
+    return owner, repo, None, ""
+
+
+def _v2ex_topic_id(url: str) -> str:
+    parts = [part for part in urlparse(url).path.split("/") if part]
+    if len(parts) >= 2 and parts[0] == "t" and parts[1].isdigit():
+        return parts[1]
+    raise RuntimeError(f"not a V2EX topic URL: {url}")
+
+
 BUILTIN_PROVIDERS: dict[str, ProviderFn] = {
     "jina": lambda url, provider, strategy: {"markdown": _http_markdown(url, provider, strategy), "metadata": {}},
     "webfetch": lambda url, provider, strategy: {"markdown": _http_markdown(url, provider, strategy), "metadata": {}},
@@ -355,6 +471,23 @@ BUILTIN_PROVIDERS: dict[str, ProviderFn] = {
     "trafilatura": _trafilatura_provider,
     "scrapling": _scrapling_provider,
     "browser": _command_provider,
+    "youtube_ytdlp": _youtube_ytdlp_provider,
+    "github_gh": _github_gh_provider,
+    "rss_feedparser": _rss_feedparser_provider,
+    "v2ex_api": _v2ex_api_provider,
+    "exa_search": _missing_or_unconfigured_provider("mcporter exa"),
+    "bilibili_cli": _missing_or_unconfigured_provider("bili"),
+    "opencli_bilibili": _missing_or_unconfigured_provider("opencli"),
+    "twitter_cli": _missing_or_unconfigured_provider("twitter"),
+    "opencli_twitter": _missing_or_unconfigured_provider("opencli"),
+    "opencli_reddit": _missing_or_unconfigured_provider("opencli"),
+    "rdt_cli": _missing_or_unconfigured_provider("rdt"),
+    "opencli_xhs": _missing_or_unconfigured_provider("opencli"),
+    "xiaohongshu_mcp": _missing_or_unconfigured_provider("mcporter xiaohongshu"),
+    "xhs_cli": _missing_or_unconfigured_provider("xhs"),
+    "linkedin_mcp": _missing_or_unconfigured_provider("mcporter linkedin"),
+    "xueqiu_api": _missing_or_unconfigured_provider("xueqiu-session"),
+    "xiaoyuzhou_transcript": _missing_or_unconfigured_provider("ffmpeg/transcription-provider"),
 }
 
 

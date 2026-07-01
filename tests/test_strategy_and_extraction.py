@@ -9,7 +9,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from linky.extract import extract_url
 from linky.extract import _tweet_json_to_markdown, _vxtwitter_provider
-from linky.strategy import load_strategy, resolve_provider_chain, trace_enabled
+from linky.strategy import load_strategy, provider_config, resolve_provider_chain, trace_enabled
 
 
 class StrategyAndExtractionTests(unittest.TestCase):
@@ -33,6 +33,25 @@ class StrategyAndExtractionTests(unittest.TestCase):
 
         self.assertEqual(chain[0], "vxtwitter")
         self.assertNotIn("jina", chain)
+
+    def test_provider_config_reads_dedicated_platform_provider(self):
+        provider = provider_config(self.strategy, "youtube_ytdlp")
+
+        self.assertEqual(provider["method"], "command-json")
+        self.assertIn("yt-dlp", provider["requires"])
+        self.assertEqual(provider["role"], "transcript")
+
+    def test_youtube_domain_route_prefers_ytdlp_provider(self):
+        chain = resolve_provider_chain("https://www.youtube.com/watch?v=dQw4w9WgXcQ", self.strategy)
+
+        self.assertEqual(chain[0], "youtube_ytdlp")
+        self.assertNotIn("jina", chain[:1])
+
+    def test_bilibili_route_never_uses_ytdlp(self):
+        chain = resolve_provider_chain("https://www.bilibili.com/video/BV123", self.strategy)
+
+        self.assertEqual(chain[0], "bilibili_cli")
+        self.assertNotIn("youtube_ytdlp", chain)
 
     def test_vxtwitter_json_formats_tweet_markdown(self):
         markdown, metadata = _tweet_json_to_markdown(
@@ -177,6 +196,138 @@ class StrategyAndExtractionTests(unittest.TestCase):
         self.assertEqual(result.status, "success")
         self.assertEqual(result.provider, "browser")
         self.assertEqual(result.trace.final_provider, "browser")
+
+    def test_platform_provider_can_be_registered_by_id(self):
+        def youtube_provider(url, provider, strategy):
+            return {
+                "markdown": "# Video\n\n"
+                "Author: Example.\n\n"
+                "Transcript with enough source metadata. " * 12
+                + "\n\n[source](https://youtu.be/x)",
+                "metadata": {"provider": "youtube_ytdlp"},
+            }
+
+        strategy = {
+            "global": {"quality_threshold": 0.55},
+            "quality": {"min_score": 0.55},
+            "providers": {"youtube_ytdlp": {"id": "youtube_ytdlp"}},
+            "domain_routes": [{"pattern": "youtube.com", "go_to": "youtube_ytdlp", "skip_layers": ["jina"]}],
+            "fallback_chain": [{"id": "jina"}],
+        }
+
+        result = extract_url(
+            "https://www.youtube.com/watch?v=x",
+            strategy=strategy,
+            providers={"youtube_ytdlp": youtube_provider},
+        )
+
+        self.assertEqual(result.status, "success")
+        self.assertEqual(result.provider, "youtube_ytdlp")
+
+    def test_youtube_provider_runs_ytdlp_and_normalizes_output(self):
+        proc = subprocess.CompletedProcess(
+            ["yt-dlp"],
+            0,
+            stdout=(
+                '{"title":"Demo Video","channel":"Example Channel","duration":120,'
+                '"upload_date":"20260626","webpage_url":"https://www.youtube.com/watch?v=x",'
+                '"subtitles_text":"Transcript body with useful details. Transcript body with useful details. '
+                'Transcript body with useful details. Transcript body with useful details. '
+                'Transcript body with useful details. Transcript body with useful details."}'
+            ),
+            stderr="",
+        )
+
+        with patch("linky.extract.subprocess.run", return_value=proc):
+            result = extract_url("https://www.youtube.com/watch?v=x", strategy=self.strategy)
+
+        self.assertEqual(result.status, "success")
+        self.assertEqual(result.provider, "youtube_ytdlp")
+        self.assertIn("Transcript body", result.markdown)
+        self.assertEqual(result.trace.final_provider, "youtube_ytdlp")
+
+    def test_github_provider_runs_gh_and_normalizes_repo_output(self):
+        proc = subprocess.CompletedProcess(
+            ["gh"],
+            0,
+            stdout=(
+                '{"nameWithOwner":"imarco/linky","description":"Link research tool with enough useful details. '
+                'It explains source intake, extraction, traces, reports, and durable notes.",'
+                '"url":"https://github.com/imarco/linky","stargazerCount":42,'
+                '"primaryLanguage":{"name":"Python"}}'
+            ),
+            stderr="",
+        )
+
+        with patch("linky.extract.subprocess.run", return_value=proc):
+            result = extract_url("https://github.com/imarco/linky", strategy=self.strategy)
+
+        self.assertEqual(result.status, "success")
+        self.assertEqual(result.provider, "github_gh")
+        self.assertIn("# imarco/linky", result.markdown)
+
+    def test_rss_provider_uses_feedparser_when_available(self):
+        class FakeFeedparser:
+            @staticmethod
+            def parse(url):
+                return {
+                    "feed": {"title": "Example Feed", "link": url},
+                    "entries": [
+                        {
+                            "title": "Entry One",
+                            "link": "https://example.com/one",
+                            "summary": "Useful feed entry summary with enough context. " * 8,
+                        }
+                    ],
+                }
+
+        strategy = {
+            "global": {"quality_threshold": 0.55},
+            "quality": {"min_score": 0.55},
+            "providers": {"rss_feedparser": {"id": "rss_feedparser"}},
+            "domain_routes": [{"pattern": "example.com", "go_to": "rss_feedparser", "skip_layers": ["jina"]}],
+            "fallback_chain": [{"id": "jina"}],
+        }
+
+        with patch.dict(sys.modules, {"feedparser": FakeFeedparser}):
+            result = extract_url("https://example.com/feed.xml", strategy=strategy)
+
+        self.assertEqual(result.status, "success")
+        self.assertEqual(result.provider, "rss_feedparser")
+        self.assertIn("Entry One", result.markdown)
+
+    def test_v2ex_provider_fetches_topic_and_replies(self):
+        class FakeResponse:
+            def __init__(self, body):
+                self.body = body
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc, tb):
+                return False
+
+            def read(self):
+                return self.body.encode("utf-8")
+
+        def fake_urlopen(request, timeout=0):
+            if "topics/show" in request.full_url:
+                return FakeResponse(
+                    '[{"id":123,"title":"Python discussion","content":"Topic body with enough useful details. '
+                    'Topic body with enough useful details. Topic body with enough useful details.",'
+                    '"url":"https://www.v2ex.com/t/123","member":{"username":"alice"},'
+                    '"node":{"name":"python","title":"Python"}}]'
+                )
+            return FakeResponse(
+                '[{"author":"bob","content":"Reply text with useful details. Reply text with useful details."}]'
+            )
+
+        with patch("linky.extract.urllib.request.urlopen", side_effect=fake_urlopen):
+            result = extract_url("https://www.v2ex.com/t/123", strategy=self.strategy)
+
+        self.assertEqual(result.status, "success")
+        self.assertEqual(result.provider, "v2ex_api")
+        self.assertIn("Reply text", result.markdown)
 
 
 if __name__ == "__main__":

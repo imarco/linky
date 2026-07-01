@@ -56,7 +56,7 @@ https://dify.ai/
 仓库内置了默认的网页采集策略（`references/fetch-strategy.toml`），包含：
 
 - **降级链**：Jina Reader → Trafilatura → Scrapling + html2text → WebFetch → 浏览器自动化
-- **域名快捷路由**：微信公众号直接走 Scrapling（跳过 Jina），小红书走浏览器自动化等
+- **域名快捷路由**：微信公众号直接走 Scrapling（跳过 Jina），平台链接优先走对应 native provider
 - **正文选择器**：通用选择器 + 特定域名选择器覆盖
 - **html2text 参数**：保留链接、图片，不自动折行
 - **质量门禁与 trace**：低质量正文继续 fallback；本地 trace 默认写入 `.linky/runs/`
@@ -64,6 +64,10 @@ https://dify.ai/
 
 首次使用时会自动拷贝到 `~/.config/linky/fetch-strategy.toml`。
 你可以修改本地副本来自定义覆盖（比如添加新的域名路由、调整降级顺序），仓库更新不会覆盖你的自定义配置。
+
+平台型链接会优先走 Linky 原生 provider，而不是盲目进入通用网页 fallback。当前 provider 包括 YouTube(`yt-dlp`)、GitHub(`gh`)、RSS(`feedparser`)、V2EX API、Bilibili(`bili-cli`)、Twitter/X(`vxTwitter` / `twitter-cli` / OpenCLI)、Reddit(OpenCLI / `rdt-cli`)、小红书(OpenCLI / `xiaohongshu-mcp` / `xhs-cli`)、LinkedIn(Jina / MCP)、雪球 API、小宇宙转录。
+
+这些 approach 来自对 Agent Reach 的安装说明和 channel 代码研究，但 Linky 不依赖 Agent Reach runtime，不调用 `agent-reach doctor` 或 `agent-reach install`。依赖检查和安全安装由 Linky 自己的 `bin/install` 与 `bin/linky-doctor` 负责。
 
 ## 架构
 

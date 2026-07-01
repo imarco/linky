@@ -10,4 +10,4 @@
 | linky-architecture-enhancement | Output style extension | Claude Code-style durable output styles | complete | Added standard, 极简白话, explanatory, and learning style definitions with user override support |
 | linky-source-intake-evolution | Phase 0 | Docs fact-source chain and reference boundaries | complete | NotebookLM/Tencent ima output targets and paywall access research remain future tracks |
 | linky-source-intake-evolution | Phase 1 | Source intake contracts and doctor | complete | URL, Markdown, text, optional markitdown conversion verified by unittest |
-| agent-reach-platforms | Phase 0 | Native provider/domain-route plan for platform approaches | planning_reviewed | Full plan review accepted; execute first zero-login provider slice before session-heavy providers |
+| agent-reach-platforms | Phase 0 | Native provider/domain-route plan for platform approaches | execute_complete | First zero-login provider slice plus doctor/install readiness implemented |
