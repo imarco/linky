@@ -137,7 +137,10 @@ class DoctorTests(unittest.TestCase):
         self.assertIn("jina", provider_ids)
         self.assertIn("scrapling", provider_ids)
         self.assertIn("youtube_ytdlp", provider_ids)
-        self.assertEqual(report["status"], "ready")
+        self.assertEqual(report["status"], "missing")
+        providers = {item["id"]: item for item in report["providers"]}
+        self.assertEqual(providers["youtube_ytdlp"]["status"], "ready")
+        self.assertEqual(providers["opencli_xhs"]["status"], "unimplemented")
 
     def test_doctor_checks_dedicated_provider_requirements(self):
         strategy = {

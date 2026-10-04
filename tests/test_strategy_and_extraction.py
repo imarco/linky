@@ -231,14 +231,13 @@ class StrategyAndExtractionTests(unittest.TestCase):
             stdout=(
                 '{"title":"Demo Video","channel":"Example Channel","duration":120,'
                 '"upload_date":"20260626","webpage_url":"https://www.youtube.com/watch?v=x",'
-                '"subtitles_text":"Transcript body with useful details. Transcript body with useful details. '
-                'Transcript body with useful details. Transcript body with useful details. '
-                'Transcript body with useful details. Transcript body with useful details."}'
+                '"requested_subtitles":{"en":{"ext":"json3","url":"https://www.youtube.com/api/timedtext?v=x"}}}'
             ),
             stderr="",
         )
 
-        with patch("linky.extract.subprocess.run", return_value=proc):
+        captions = {"events": [{"segs": [{"utf8": "Transcript body with useful details. " * 8}]}]}
+        with patch("linky.extract.subprocess.run", return_value=proc), patch("linky.extract._fetch_json", return_value=captions):
             result = extract_url("https://www.youtube.com/watch?v=x", strategy=self.strategy)
 
         self.assertEqual(result.status, "success")
@@ -269,9 +268,10 @@ class StrategyAndExtractionTests(unittest.TestCase):
     def test_rss_provider_uses_feedparser_when_available(self):
         class FakeFeedparser:
             @staticmethod
-            def parse(url):
+            def parse(data, **kwargs):
                 return {
-                    "feed": {"title": "Example Feed", "link": url},
+                    "version": "rss20",
+                    "feed": {"title": "Example Feed", "link": "https://example.com/feed.xml"},
                     "entries": [
                         {
                             "title": "Entry One",
@@ -289,7 +289,7 @@ class StrategyAndExtractionTests(unittest.TestCase):
             "fallback_chain": [{"id": "jina"}],
         }
 
-        with patch.dict(sys.modules, {"feedparser": FakeFeedparser}):
+        with patch.dict(sys.modules, {"feedparser": FakeFeedparser}), patch("linky.extract.urllib.request.urlopen"):
             result = extract_url("https://example.com/feed.xml", strategy=strategy)
 
         self.assertEqual(result.status, "success")

@@ -23,8 +23,8 @@ class PlatformProviderParserTests(unittest.TestCase):
                 "duration": 120,
                 "upload_date": "20260626",
                 "webpage_url": "https://www.youtube.com/watch?v=abc",
-                "subtitles_text": "Hello from captions. " * 20,
-            }
+            },
+            "Hello from captions. " * 20,
         )
 
         self.assertIn("# Demo Video", markdown)

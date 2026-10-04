@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from .strategy import load_strategy
+from .extract import BUILTIN_PROVIDERS
 
 
 ModuleChecker = Callable[[str], bool]
@@ -88,13 +89,14 @@ def doctor_report(
         providers.append(
             {
                 "id": provider_id,
-                "status": "missing" if missing else "ready",
+                "status": "missing" if missing else ("ready" if provider_id in BUILTIN_PROVIDERS else "unimplemented"),
+                "implemented": provider_id in BUILTIN_PROVIDERS,
                 "missing": missing,
                 "requirements": requirements,
             }
         )
 
-    overall = "ready" if all(item["status"] != "missing" for item in providers) else "missing"
+    overall = "ready" if all(item["status"] in {"ready", "disabled"} for item in providers) else "missing"
     return {"status": overall, "providers": providers, "modules": modules, "commands": commands}
 
 

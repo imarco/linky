@@ -357,9 +357,43 @@ def _command_provider(url: str, provider: dict[str, Any], strategy: dict[str, An
 
 def _youtube_ytdlp_provider(url: str, provider: dict[str, Any], strategy: dict[str, Any]) -> dict[str, Any]:
     timeout = int(strategy.get("global", {}).get("timeout_seconds", 15))
-    info = _run_json_command(["yt-dlp", "--dump-single-json", "--skip-download", url], timeout)
-    markdown, metadata = youtube_info_to_markdown(info)
-    return {"markdown": markdown, "metadata": {**metadata, "provider": "youtube_ytdlp"}}
+    args = [
+        "yt-dlp", "--ignore-config", "--no-playlist", "--simulate",
+        "--dump-single-json", "--skip-download", "--write-subs",
+        "--write-auto-subs", "--sub-format", "json3", "--js-runtimes", "node",
+    ]
+    if provider.get("sub_lang"):
+        args.extend(["--sub-langs", str(provider["sub_lang"])])
+    info = _run_json_command([*args, "--", url], timeout)
+    subtitles = info.get("requested_subtitles") or {}
+    if not isinstance(subtitles, dict):
+        raise RuntimeError("yt-dlp returned invalid caption metadata")
+    for language, subtitle in subtitles.items():
+        if not isinstance(subtitle, dict) or subtitle.get("ext") != "json3":
+            continue
+        caption_url = subtitle.get("url")
+        if not isinstance(caption_url, str) or urlparse(caption_url).scheme not in {"http", "https"}:
+            continue
+        captions = _fetch_json(caption_url, timeout)
+        events = captions.get("events") if isinstance(captions, dict) else None
+        if not isinstance(events, list):
+            raise RuntimeError("YouTube returned invalid caption data")
+        lines = []
+        for event in events:
+            segments = event.get("segs") if isinstance(event, dict) else None
+            if not isinstance(segments, list):
+                continue
+            line = "".join(
+                segment["utf8"] for segment in segments
+                if isinstance(segment, dict) and isinstance(segment.get("utf8"), str)
+            ).strip()
+            if line:
+                lines.append(line)
+        if not lines:
+            raise RuntimeError("YouTube captions contain no text")
+        markdown, metadata = youtube_info_to_markdown(info, "\n".join(lines))
+        return {"markdown": markdown, "metadata": {**metadata, "provider": "youtube_ytdlp", "subtitle_language": language}}
+    raise RuntimeError("No readable JSON3 captions available for this YouTube video")
 
 
 def _github_gh_provider(url: str, provider: dict[str, Any], strategy: dict[str, Any]) -> dict[str, Any]:
@@ -393,7 +427,12 @@ def _rss_feedparser_provider(url: str, provider: dict[str, Any], strategy: dict[
     except ImportError as exc:
         raise RuntimeError("feedparser is not installed") from exc
 
-    parsed = feedparser.parse(url)
+    timeout = int(strategy.get("global", {}).get("timeout_seconds", 15))
+    request = urllib.request.Request(url, headers={"Accept": "application/rss+xml, application/atom+xml, application/xml", "User-Agent": "Linky/1.0"})
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        parsed = feedparser.parse(response.read(), response_headers={"content-location": response.geturl()})
+    if not parsed.get("version"):
+        raise RuntimeError("Response is not a recognized RSS or Atom feed")
     markdown, metadata = feed_to_markdown(parsed)
     return {"markdown": markdown, "metadata": {**metadata, "provider": "rss_feedparser"}}
 
@@ -416,13 +455,6 @@ def _v2ex_api_provider(url: str, provider: dict[str, Any], strategy: dict[str, A
         topic = {**topic, "replies": replies}
     markdown, metadata = v2ex_topic_to_markdown(topic)
     return {"markdown": markdown, "metadata": {**metadata, "provider": "v2ex_api"}}
-
-
-def _missing_or_unconfigured_provider(requirement: str) -> ProviderFn:
-    def provider(url: str, provider_config: dict[str, Any], strategy: dict[str, Any]) -> dict[str, Any]:
-        raise RuntimeError(f"{requirement} is missing or not configured")
-
-    return provider
 
 
 def _run_json_command(args: list[str], timeout: int) -> dict[str, Any]:
@@ -449,12 +481,14 @@ def _fetch_json(url: str, timeout: int) -> Any:
 def _github_parts(url: str) -> tuple[str, str, str | None, str]:
     parsed = urlparse(url)
     parts = [part for part in parsed.path.split("/") if part]
-    if len(parts) < 2:
+    if parsed.scheme not in {"https", "http"} or parsed.hostname not in {"github.com", "www.github.com"} or len(parts) < 2:
         raise RuntimeError(f"not a GitHub repository URL: {url}")
     owner, repo = parts[0], parts[1]
-    if len(parts) >= 4 and parts[2] in {"issues", "pull"}:
+    if len(parts) == 2:
+        return owner, repo, None, ""
+    if len(parts) == 4 and parts[2] in {"issues", "pull"} and re.fullmatch(r"[1-9][0-9]*", parts[3]):
         return owner, repo, parts[2], parts[3]
-    return owner, repo, None, ""
+    raise RuntimeError(f"unsupported GitHub URL path: {parsed.path}")
 
 
 def _v2ex_topic_id(url: str) -> str:
@@ -475,19 +509,6 @@ BUILTIN_PROVIDERS: dict[str, ProviderFn] = {
     "github_gh": _github_gh_provider,
     "rss_feedparser": _rss_feedparser_provider,
     "v2ex_api": _v2ex_api_provider,
-    "exa_search": _missing_or_unconfigured_provider("mcporter exa"),
-    "bilibili_cli": _missing_or_unconfigured_provider("bili"),
-    "opencli_bilibili": _missing_or_unconfigured_provider("opencli"),
-    "twitter_cli": _missing_or_unconfigured_provider("twitter"),
-    "opencli_twitter": _missing_or_unconfigured_provider("opencli"),
-    "opencli_reddit": _missing_or_unconfigured_provider("opencli"),
-    "rdt_cli": _missing_or_unconfigured_provider("rdt"),
-    "opencli_xhs": _missing_or_unconfigured_provider("opencli"),
-    "xiaohongshu_mcp": _missing_or_unconfigured_provider("mcporter xiaohongshu"),
-    "xhs_cli": _missing_or_unconfigured_provider("xhs"),
-    "linkedin_mcp": _missing_or_unconfigured_provider("mcporter linkedin"),
-    "xueqiu_api": _missing_or_unconfigured_provider("xueqiu-session"),
-    "xiaoyuzhou_transcript": _missing_or_unconfigured_provider("ffmpeg/transcription-provider"),
 }
 
 
@@ -535,6 +556,7 @@ def extract_url(
                 markdown = str(raw.get("markdown", ""))
                 metadata = dict(raw.get("metadata", {}))
 
+            markdown = markdown[:int(strategy.get("global", {}).get("max_chars", 30000))]
             quality = score_markdown(markdown)
             elapsed_ms = int((time.monotonic() - start) * 1000)
             fallback_reason = None if quality["score"] >= threshold else "low_quality"

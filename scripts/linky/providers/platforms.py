@@ -3,11 +3,13 @@ from __future__ import annotations
 from typing import Any
 
 
-def youtube_info_to_markdown(info: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+def youtube_info_to_markdown(info: dict[str, Any], transcript: str) -> tuple[str, dict[str, Any]]:
     title = str(info.get("title") or "YouTube video").strip()
     channel = str(info.get("channel") or info.get("uploader") or "").strip()
     url = str(info.get("webpage_url") or info.get("original_url") or "").strip()
-    subtitles = str(info.get("subtitles_text") or info.get("automatic_captions_text") or "").strip()
+    subtitles = transcript.strip()
+    if not subtitles:
+        raise ValueError("YouTube captions contain no text")
     duration = info.get("duration")
     upload_date = str(info.get("upload_date") or "").strip()
 

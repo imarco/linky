@@ -119,16 +119,15 @@ notes = "第三方抓取服务；FixTweet status endpoint 对 X Article content.
 name = "YouTube yt-dlp"
 method = "command-json"
 role = "transcript"
-command = "yt-dlp --dump-single-json --skip-download --write-auto-subs --sub-lang {sub_lang} {url}"
 best_for = "YouTube metadata, captions, subtitles, and transcript extraction"
-notes = "Requires yt-dlp plus node or deno for current YouTube extraction paths"
+notes = "Uses yt-dlp requested_subtitles to fetch JSON3 caption text; optional sub_lang selects languages. Requires node or deno. Missing captions continue fallback."
 requires = ["yt-dlp", "node-or-deno"]
 
 [providers.github_gh]
 name = "GitHub gh CLI"
 method = "command-json"
 role = "structured-url-reader"
-best_for = "GitHub repositories, issues, pull requests, releases, and code search"
+best_for = "GitHub repository summaries, issue bodies, and pull request bodies; other URL paths use webpage fallback"
 requires = ["gh"]
 
 [providers.rss_feedparser]
@@ -149,7 +148,7 @@ requires = ["mcporter", "exa-mcp-config"]
 name = "V2EX public API"
 method = "json-api"
 role = "structured-url-reader"
-best_for = "V2EX topics, nodes, replies, and users"
+best_for = "V2EX topic bodies and replies; other URL paths use webpage fallback"
 requires = []
 
 [providers.bilibili_cli]
