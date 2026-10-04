@@ -1,12 +1,19 @@
 {
   "name": "agent-reach-platforms",
-  "status": "execute_complete",
-  "phase": "Execute",
+  "status": "qa_pending",
+  "phase": "QA",
+  "iteration_mode": "steady",
   "created_at": "2026-06-26T07:14:46Z",
-  "updated_at": "2026-07-01T07:09:00Z",
+  "updated_at": "2026-10-04T22:30:57Z",
   "owner": "marco",
-  "base_branch": "main",
+  "source_branch": "feature/agent-reach-platforms",
   "branch": "feature/agent-reach-platforms",
+  "target_branch": "",
+  "start_point": {
+    "ref": "main",
+    "sha": ""
+  },
+  "landing_mode": "remote_merge_request",
   "pr": null,
   "feature_docs": [
     "docs/features/agent-reach-platforms.md"
@@ -17,10 +24,49 @@
   "testing_docs": [
     "docs/testing/agent-reach-platforms.md"
   ],
+  "change_workspaces": [],
   "shared_docs": [
     "docs/plans/roadmap.md",
     "docs/plans/current-status.md"
   ],
+  "qa": {
+    "status": "unknown",
+    "delegate": "cf-native-verification",
+    "evidence": "",
+    "tested_sha": "",
+    "completed_at": ""
+  },
+  "review": {
+    "status": "unknown",
+    "delegate": "cf-managed-review",
+    "evidence": "",
+    "reviewed_sha": "",
+    "completed_at": ""
+  },
+  "candidate": {
+    "status": "unknown",
+    "head_sha": "",
+    "base_sha": "",
+    "provider": "",
+    "repository": "",
+    "change_number": 0,
+    "url": "",
+    "readiness_evidence": "",
+    "deploy_fingerprint": "",
+    "prepared_at": ""
+  },
+  "release": {
+    "status": "unknown",
+    "journal": "",
+    "merge_commit": "",
+    "merged_at": "",
+    "deployment": {},
+    "verification": {},
+    "rollback": {
+      "status": "not_requested"
+    },
+    "imported_at": ""
+  },
   "ship": {
     "status": "unknown",
     "delegate": "skill:ship",
@@ -39,6 +85,19 @@
     "evidence": "",
     "last_run_at": ""
   },
+  "deployment": {
+    "status": "unknown",
+    "delegate": "skill:land-and-deploy",
+    "evidence": "",
+    "completed_at": ""
+  },
+  "observation": {
+    "status": "unknown",
+    "delegate": "skill:canary",
+    "evidence": "",
+    "completed_at": ""
+  },
+  "base_branch": "main",
   "plan_review": {
     "status": "complete",
     "depth": "full",
@@ -46,10 +105,10 @@
     "reviewed_at": "2026-07-01T06:16:22Z"
   },
   "last_handoff": {
-    "from": "Plan",
-    "to": "Execute",
-    "sha": "b6d296a",
-    "note": "auto: manual /cf:execute entry after completed plan review",
-    "recorded_at": "2026-07-01T06:59:46Z"
+    "from": "Execute",
+    "to": "QA",
+    "sha": "52de34b",
+    "note": "auto: manual /cf:qa entry after completed execution",
+    "recorded_at": "2026-10-04T22:30:57Z"
   }
 }

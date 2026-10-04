@@ -1,6 +1,6 @@
 # Current Status
 
-<!-- cf-runtime: active=agent-reach-platforms phase=Execute status=execute_complete -->
+<!-- cf-runtime: active=agent-reach-platforms phase=QA status=qa_pending -->
 | Project | Status | Active Phase | Last Updated | Blockers |
 |---|---|---|---|---|
 | linky-architecture-enhancement | execute_complete | Complete + output-style extension accepted | 2026-05-20 | None |
