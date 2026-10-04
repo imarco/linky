@@ -1,0 +1,55 @@
+{
+  "name": "agent-reach-platforms",
+  "status": "execute_complete",
+  "phase": "Execute",
+  "created_at": "2026-06-26T07:14:46Z",
+  "updated_at": "2026-07-01T07:09:00Z",
+  "owner": "marco",
+  "base_branch": "main",
+  "branch": "feature/agent-reach-platforms",
+  "pr": null,
+  "feature_docs": [
+    "docs/features/agent-reach-platforms.md"
+  ],
+  "test_docs": [
+    "docs/test-cases/agent-reach-platforms.md"
+  ],
+  "testing_docs": [
+    "docs/testing/agent-reach-platforms.md"
+  ],
+  "shared_docs": [
+    "docs/plans/roadmap.md",
+    "docs/plans/current-status.md"
+  ],
+  "ship": {
+    "status": "unknown",
+    "delegate": "skill:ship",
+    "pr_number": 0,
+    "pr_url": "",
+    "pr_state": "UNKNOWN",
+    "merge_commit": "",
+    "merged_at": "",
+    "checked_at": ""
+  },
+  "doc_release": {
+    "status": "unknown",
+    "delegate": "skill:document-release",
+    "critical_debt_count": 0,
+    "common_debt_count": 0,
+    "evidence": "",
+    "last_run_at": ""
+  },
+  "plan_review": {
+    "status": "complete",
+    "depth": "full",
+    "delegate": "skill:autoplan",
+    "reviewed_at": "2026-07-01T06:16:22Z"
+  },
+  "last_handoff": {
+    "from": "Plan",
+    "to": "Execute",
+    "sha": "b6d296a",
+    "note": "auto: manual /cf:execute entry after completed plan review",
+    "recorded_at": "2026-07-01T06:59:46Z"
+  }
+}
