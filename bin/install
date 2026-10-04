@@ -25,8 +25,9 @@ MODULES = {
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Linky dependency installer")
-    parser.add_argument("--check", action="store_true", help="Only report dependency status")
-    parser.add_argument("--install", action="store_true", help="Install safe user-space dependencies")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--check", action="store_true", help="Only report dependency status")
+    mode.add_argument("--install", action="store_true", help="Install safe user-space dependencies")
     args = parser.parse_args(argv)
 
     if not args.check and not args.install:
@@ -45,6 +46,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.check:
         return 1 if missing_commands or missing_modules else 0
 
+    install_failed = False
     for name in missing_commands:
         command = COMMANDS[name]["auto"]
         if command is None:
@@ -53,10 +55,39 @@ def main(argv: list[str] | None = None) -> int:
         if command[0] in {"pipx", "npm"} and shutil.which(command[0]) is None:
             print(f"manual install required for {name}: {COMMANDS[name]['manual']}")
             continue
-        subprocess.run(command, check=False)
+        try:
+            result = subprocess.run(command, check=False)
+        except OSError as error:
+            print(f"install failed for {name}: could not execute {command[0]} ({error})")
+            print(f"manual install required for {name}: {COMMANDS[name]['manual']}")
+            install_failed = True
+            continue
+        if result.returncode != 0:
+            print(f"install failed for {name}: command exited with {result.returncode}")
+            print(f"manual install required for {name}: {COMMANDS[name]['manual']}")
+            install_failed = True
     for name in missing_modules:
-        subprocess.run(MODULES[name]["auto"], check=False)
-    return 0
+        command = MODULES[name]["auto"]
+        try:
+            result = subprocess.run(command, check=False)
+        except OSError as error:
+            print(f"install failed for {name}: could not execute {command[0]} ({error})")
+            print(f"manual install required for {name}: {MODULES[name]['manual']}")
+            install_failed = True
+            continue
+        if result.returncode != 0:
+            print(f"install failed for {name}: command exited with {result.returncode}")
+            print(f"manual install required for {name}: {MODULES[name]['manual']}")
+            install_failed = True
+
+    importlib.invalidate_caches()
+    remaining_commands = [name for name in COMMANDS if shutil.which(name) is None]
+    remaining_modules = [name for name in MODULES if not _module_available(name)]
+    for name in remaining_commands:
+        print(f"still missing command: {name}")
+    for name in remaining_modules:
+        print(f"still missing module: {name}")
+    return 1 if install_failed or remaining_commands or remaining_modules else 0
 
 
 def _module_available(name: str) -> bool:
