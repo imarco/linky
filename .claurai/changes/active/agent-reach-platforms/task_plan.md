@@ -1136,5 +1136,20 @@ Review findings absorbed into this plan:
 
 NO UNRESOLVED DECISIONS
 
+### Phase 4: Review follow-up correctness repairs
+- **Status:** complete
+
+- Migrated legacy planning and private notes using the approved migration plan.
+- Replaced synthetic YouTube caption fields with selected JSON3 caption retrieval.
+- Restricted gh extraction to supported URL shapes, routed feed URLs with a
+  bounded fetch, and preserved relative feed links after redirects.
+- Enforced disabled providers and max_chars; distinguished absent implementations
+  from installed dependencies in doctor.
+- Verified installer exit codes and post-install command/module checks.
+- Synced feature, test-case, testing, roadmap and current-status documentation.
+- Verification before QA entry: 96 pytest tests and 17 subtests passed;
+  GitHub PR #6 was read through the actual gh provider. Live YouTube subtitle
+  availability was not established. Formal QA/review evidence is separate.
+
 ## Current Phase
-Phase 1: Strategy, parser, and route metadata foundation
+Implementation complete; ready for QA entry.

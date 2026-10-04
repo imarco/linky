@@ -65,7 +65,7 @@ https://dify.ai/
 首次使用时会自动拷贝到 `~/.config/linky/fetch-strategy.toml`。
 你可以修改本地副本来自定义覆盖（比如添加新的域名路由、调整降级顺序），仓库更新不会覆盖你的自定义配置。
 
-平台型链接会优先走 Linky 原生 provider，而不是盲目进入通用网页 fallback。当前 provider 包括 YouTube(`yt-dlp`)、GitHub(`gh`)、RSS(`feedparser`)、V2EX API、Bilibili(`bili-cli`)、Twitter/X(`vxTwitter` / `twitter-cli` / OpenCLI)、Reddit(OpenCLI / `rdt-cli`)、小红书(OpenCLI / `xiaohongshu-mcp` / `xhs-cli`)、LinkedIn(Jina / MCP)、雪球 API、小宇宙转录。
+平台型链接会优先走 Linky 原生 provider。已实现 YouTube 字幕(`yt-dlp`)、GitHub 仓库简介/issue/PR 正文(`gh`)、RSS/Atom(`feedparser`)、V2EX 主题与回复，以及既有 Twitter/X 公开 status(`vxTwitter`)。YouTube 无可读字幕、GitHub 不支持的子路径会记录失败并继续通用 fallback。Bilibili、OpenCLI、MCP、雪球和小宇宙等目前仅有策略与依赖目录，安装 CLI 不会使尚未实现的 provider 自动可用；doctor 会如实报告。
 
 这些 approach 来自对 Agent Reach 的安装说明和 channel 代码研究，但 Linky 不依赖 Agent Reach runtime，不调用 `agent-reach doctor` 或 `agent-reach install`。依赖检查和安全安装由 Linky 自己的 `bin/install` 与 `bin/linky-doctor` 负责。
 

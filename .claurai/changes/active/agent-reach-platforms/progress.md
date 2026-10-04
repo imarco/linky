@@ -30,3 +30,17 @@
 - Phases executed: 1-3
 - Result: execute_complete
 - Notes: Added platform provider metadata/routes, parser helpers, YouTube/GitHub/RSS/V2EX extraction slice, fail-closed session-heavy providers, doctor readiness, bin/install, bin/linky-doctor, README sync, and focused release gates.
+
+## Migration and Correctness Follow-up: 2026-10-05
+
+- User confirmed classifying all seven ambiguous historical paths as private notes.
+- Migration 20261005-062201-e0865b50 applied and verified; preflight now passes.
+- Existing main-target PR and prior branch intent supplied the migrated project
+  branch policy. Private notes are excluded from Git; historical plans are preserved.
+- Fixed actual-caption retrieval, incorrect GitHub path handling, RSS routing and
+  timeout/base-URL handling, disabled providers, output limits and doctor readiness.
+- Installer failure handling implemented by luna_worker, reviewed by main thread;
+  no package installation on the host was performed.
+- Local pytest: 96 tests and 17 subtests passed in an isolated Python 3.14 test
+  environment. Actual gh provider read PR #6. Formal QA/review remain pending.
+- README/SKILL/reference restructuring and logo assets from other work preserved.
