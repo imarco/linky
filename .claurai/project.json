@@ -1,0 +1,11 @@
+{
+  "schema_version": 2,
+  "branch_policy": {
+    "status": "confirmed",
+    "change_target_resolution": "fixed",
+    "target_branch": "main",
+    "landing_mode": "remote_merge_request",
+    "allow_direct_target_push": false,
+    "allow_local_target_merge": false
+  }
+}

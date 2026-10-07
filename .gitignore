@@ -1,6 +1,5 @@
 
 # Claurai ecosystem runtime state (worklog, pipeline, planning)
-.claurai/
 
 # Local cloned reference repositories for architecture research; do not commit source snapshots
 refs/

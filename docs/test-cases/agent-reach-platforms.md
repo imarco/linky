@@ -39,8 +39,8 @@
      user-visible session requirements, and missing credential/config warnings.
 
 6. **YouTube transcript provider normalizes output**
-   - Given `yt-dlp` returns metadata and subtitles for a fixture-like command
-     response
+   - Given `yt-dlp` returns real-shaped `requested_subtitles` metadata and a
+     selected subtitle URL returns JSON3 events
    - When the provider parses it
    - Then Linky emits Markdown transcript content plus metadata for title,
      author/channel, duration, upload date, and source URL.
@@ -63,12 +63,29 @@
    - Then only useful note id, title, description/content, author, engagement,
      tags, image URLs, and comments remain.
 
-10. **Login-required providers fail closed**
-    - Given Reddit, XiaoHongShu, Twitter, LinkedIn, or Xueqiu lacks required
-      login/session/config
-    - When extraction is attempted
-    - Then Linky marks the item blocked or partial and does not attempt to
-      respects access controls.
+10. **Unimplemented providers are identified honestly**
+    - Given a session-backed provider has only a strategy definition
+    - When doctor and extraction run, even with every dependency present
+    - Then doctor reports `implemented: false` and `unimplemented`; extraction
+      records `provider not implemented` and follows the configured fallback.
+    - Authenticated extraction and live service health remain unverified until
+      an actual adapter and its session checks exist.
+
+11. **Native extraction respects target and resource boundaries**
+    - A GitHub file/tree/release URL never returns a repository summary as its
+      extracted body; the failed attempt is traced and the next provider runs.
+    - Recognizable feed paths select feedparser without overriding explicit
+      domain routes; feed retrieval has a timeout and rejects non-feed data.
+    - Missing/empty captions never produce a successful video transcript.
+    - Disabled providers are not invoked; all Markdown respects `max_chars`.
+
+12. **Install status reflects actual results**
+    - A nonzero install command, missing package manager or manual-only
+      dependency leaves a nonzero exit status and an actionable message.
+    - A command returning zero without making its dependency available still
+      fails the post-install check.
+    - Successful installation is verified for both commands and Python modules;
+      `--check` never invokes an installer.
 
 ## Edge Cases
 
