@@ -6,6 +6,8 @@ not retried or replaced with another source for the same document.
 """
 import hashlib
 import json
+import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -16,12 +18,21 @@ sys.path.insert(0, str(ROOT / 'scripts'))
 from linky.acquire import acquire_batch, Limits
 
 
+def public_source(env=None):
+    env = os.environ if env is None else env
+    repository = env.get('ACQUISITION_SMOKE_REPOSITORY', 'imarco/linky')
+    commit = env.get('ACQUISITION_SMOKE_REF') or subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
+    if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9][A-Za-z0-9_.-]*', repository) or not re.fullmatch(r'[0-9a-fA-F]{40}', commit):
+        raise ValueError('smoke source must be a public GitHub repository and full commit SHA')
+    return repository, commit
+
+
 def main():
-    commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
-    base = f'https://raw.githubusercontent.com/imarco/linky/{commit}/tests/fixtures/acquisition/'
+    repository, commit = public_source()
+    base = f'https://raw.githubusercontent.com/{repository}/{commit}/tests/fixtures/acquisition/'
     fixture_names = ['public.pdf', 'article.html', 'silence.wav', 'captions.vtt']
     urls = [base+name for name in fixture_names] + [
-        f'https://github.com/imarco/linky/blob/{commit}/README.md',
+        f'https://github.com/{repository}/blob/{commit}/README.md',
         'https://github.com/yt-dlp/yt-dlp/releases/download/2026.10.26/SHA2-256SUMS',
     ]
     with tempfile.TemporaryDirectory(prefix='linky-public-smoke-') as output:

@@ -36,6 +36,53 @@ class ProviderRegressionTests(unittest.TestCase):
         self.assertEqual(timeout, 7)
         fetch.assert_called_once_with(info["requested_subtitles"]["en"]["url"], 7)
 
+    def test_youtube_tries_later_selected_track_after_invalid_or_empty_captions(self):
+        info = {"requested_subtitles": {
+            "en": {"ext": "json3", "url": "https://www.youtube.com/api/timedtext?lang=en"},
+            "zh": {"ext": "json3", "url": "https://www.youtube.com/api/timedtext?lang=zh"},
+        }}
+        valid = {"events": [{"segs": [{"utf8": "Selected second language transcript."}]}]}
+        for first in ({"events": []}, {"events": [{"segs": [{"utf8": "\n"}]}]}, {"events": "invalid"}, {}):
+            with self.subTest(first=first), patch("linky.extract._run_json_command", return_value=info), patch("linky.extract._fetch_json", side_effect=[first, valid]) as fetch:
+                result = _youtube_ytdlp_provider("https://youtu.be/demo", {}, {})
+                self.assertIn("Selected second language transcript.", result["markdown"])
+                self.assertEqual(result["metadata"]["subtitle_language"], "zh")
+                self.assertEqual([call.args[0] for call in fetch.call_args_list], [
+                    "https://www.youtube.com/api/timedtext?lang=en",
+                    "https://www.youtube.com/api/timedtext?lang=zh",
+                ])
+
+    def test_youtube_exhausts_empty_selected_tracks_before_failing(self):
+        info = {"requested_subtitles": {
+            "en": {"ext": "json3", "url": "https://www.youtube.com/api/timedtext?lang=en"},
+            "zh": {"ext": "json3", "url": "https://www.youtube.com/api/timedtext?lang=zh"},
+        }}
+        with patch("linky.extract._run_json_command", return_value=info), patch("linky.extract._fetch_json", side_effect=[{"events": []}, {"events": []}]) as fetch:
+            with self.assertRaisesRegex(RuntimeError, "No readable JSON3 captions"):
+                _youtube_ytdlp_provider("https://youtu.be/demo", {}, {})
+            self.assertEqual(fetch.call_count, 2)
+
+    def test_youtube_does_not_swallow_caption_authorization_errors(self):
+        from urllib.error import HTTPError
+        info = {"requested_subtitles": {
+            "en": {"ext": "json3", "url": "https://www.youtube.com/api/timedtext?lang=en"},
+            "zh": {"ext": "json3", "url": "https://www.youtube.com/api/timedtext?lang=zh"},
+        }}
+        error = HTTPError(info["requested_subtitles"]["en"]["url"], 403, "Forbidden", {}, None)
+        with patch("linky.extract._run_json_command", return_value=info), patch("linky.extract._fetch_json", side_effect=error) as fetch:
+            with self.assertRaises(HTTPError):
+                _youtube_ytdlp_provider("https://youtu.be/demo", {}, {})
+            self.assertEqual(fetch.call_count, 1)
+
+    def test_xiaohongshu_routes_skip_generic_extractors(self):
+        strategy = load_strategy(ROOT / "references/fetch-strategy.toml")
+        for url in ("https://www.xiaohongshu.com/explore/example", "https://xhslink.com/example"):
+            with self.subTest(url=url):
+                chain = resolve_provider_chain(url, strategy)
+                self.assertEqual(chain[0], "opencli_xhs")
+                self.assertIn("browser", chain)
+                self.assertTrue(set(chain).isdisjoint({"jina", "trafilatura", "scrapling", "webfetch"}), chain)
+
     def test_youtube_without_captions_does_not_claim_transcript(self):
         for subtitles in (None, {}, {"en": {"ext": "vtt", "url": "https://example.com/captions"}}):
             with self.subTest(subtitles=subtitles), patch("linky.extract._run_json_command", return_value={"title": "A long title " * 60, "requested_subtitles": subtitles}):

@@ -320,7 +320,7 @@ reason = "微信公开正文适合使用专用正文选择器读取"
 [[domain_routes]]
 pattern = "xiaohongshu.com"
 go_to = "opencli_xhs"
-skip_layers = ["jina", "scrapling", "webfetch"]
+skip_layers = ["jina", "trafilatura", "scrapling", "webfetch"]
 reason = "小红书内容通常需要用户本人浏览器可见后读取"
 
 [[domain_routes]]

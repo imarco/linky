@@ -377,7 +377,7 @@ def _youtube_ytdlp_provider(url: str, provider: dict[str, Any], strategy: dict[s
         captions = _fetch_json(caption_url, timeout)
         events = captions.get("events") if isinstance(captions, dict) else None
         if not isinstance(events, list):
-            raise RuntimeError("YouTube returned invalid caption data")
+            continue
         lines = []
         for event in events:
             segments = event.get("segs") if isinstance(event, dict) else None
@@ -390,7 +390,7 @@ def _youtube_ytdlp_provider(url: str, provider: dict[str, Any], strategy: dict[s
             if line:
                 lines.append(line)
         if not lines:
-            raise RuntimeError("YouTube captions contain no text")
+            continue
         markdown, metadata = youtube_info_to_markdown(info, "\n".join(lines))
         return {"markdown": markdown, "metadata": {**metadata, "provider": "youtube_ytdlp", "subtitle_language": language}}
     raise RuntimeError("No readable JSON3 captions available for this YouTube video")

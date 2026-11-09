@@ -6,7 +6,7 @@ Reused open PR #6 at `c4314bf142e191992d37701764b3a4493f1d9709` (base `b6d296a23
 
 ## Automated verification
 
-The initial acquisition plus PR corrections passed 148 pytest tests and 54 subtests with pytest 9.2.0/feedparser 6.0.14. `python -m compileall -q scripts bin`, CLI help commands and `git diff --check` passed. Final counts and exact published SHA should be taken from GitHub CI on the final revision.
+The initial acquisition plus PR corrections passed 155 pytest tests and 63 subtests with pytest 9.2.0/feedparser 6.0.14. `python -m compileall -q scripts bin`, CLI help commands and `git diff --check` passed. Final counts and exact published SHA should be taken from GitHub CI on the final revision.
 
 New tests cover:
 
@@ -27,3 +27,7 @@ The local execution environment could not resolve `raw.githubusercontent.com` or
 Format verification is intentionally a MIME/signature screen and transfer accounting, not a full parser, decoder, malware scan or assertion of rights. Public direct media/subtitles are supported; platform page extraction/playlist/DRM/transcription is not. A host that requires proxy transport may reject direct DNS/socket access; Linky does not import ambient proxy credentials to compensate.
 
 The expanded live smoke downloaded and hash-verified original PDF (599 bytes), HTML (192), WAV (204), VTT (63), PNG (69) and GitHub README. Its GitHub release redirect exposed a URL validator false positive: legitimate percent-encoded spaces in Content-Disposition query parameters were rejected. A regression now allows encoded ordinary spaces while continuing to reject raw whitespace and encoded control characters. No server access restriction was bypassed.
+
+Final external review was checked against source and execution evidence. The Deno finding was a false positive: yt-dlp 2026.10.26 defaults to Deno and `--js-runtimes node` adds Node rather than replacing Deno. Two valid existing-provider findings were corrected: Xiaohongshu no longer tries Trafilatura before its browser-oriented fallback, and empty/invalid selected caption tracks no longer prevent a later selected valid track from being read (HTTP errors still propagate). CI now takes the explicit PR-head repository/SHA for live fixture URLs, rather than depending on temporary merge-commit availability. Metadata is validated before URL construction.
+
+Skill installation submission of the complete b72d894 tree returned HTTP 422 without a specific explanation. Remote verification confirmed no installation. No package reduction, wording change or repeated submission was performed to obtain acceptance. This is a service failure, not evidence of a particular scanner rule.

@@ -25,3 +25,6 @@ jobs:
       - run: python bin/linky-get --help
       - name: Live public resource smoke
         run: python tests/live_acquisition_smoke.py
+        env:
+          ACQUISITION_SMOKE_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+          ACQUISITION_SMOKE_REF: ${{ github.event.pull_request.head.sha || github.sha }}
