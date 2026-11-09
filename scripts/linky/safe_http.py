@@ -37,7 +37,7 @@ def public_url(url: str) -> str:
 def validate_url(url: str):
     if not isinstance(url, str) or len(url) > 8192 or any(c in url for c in ('\\', '\r', '\n', '\t')):
         raise RestrictedURL('invalid URL characters or length')
-    if re.search(r'[\x00-\x20\x7f]', unquote(url)):
+    if re.search(r'[\x00-\x20\x7f]', url) or re.search(r'[\x00-\x1f\x7f]', unquote(url)):
         raise RestrictedURL('URL contains control characters or spaces')
     try:
         parts = urlsplit(url)

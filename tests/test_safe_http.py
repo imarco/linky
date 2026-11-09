@@ -123,6 +123,15 @@ class SafeHTTPTests(unittest.TestCase):
         finally:
             conn.finish()
 
+    def test_encoded_spaces_in_public_signed_redirect_are_allowed(self):
+        url = 'https://release-assets.githubusercontent.com/asset?response-content-disposition=attachment%3B%20filename%3Dexample.zip'
+        self.assertEqual(safe_http.validate_url(url).hostname, 'release-assets.githubusercontent.com')
+        self.assertEqual(safe_http.public_url(url), 'https://release-assets.githubusercontent.com/asset')
+        with self.assertRaises(safe_http.RestrictedURL):
+            safe_http.validate_url('https://example.com/raw space')
+        with self.assertRaises(safe_http.RestrictedURL):
+            safe_http.validate_url('https://example.com/%0aheader')
+
     def test_redacts_query_fragment_userinfo_in_provenance(self):
         self.assertEqual(safe_http.public_url('https://u:p@example.com/a?token=secret#x'), 'https://example.com/a')
 
