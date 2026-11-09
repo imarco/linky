@@ -120,6 +120,36 @@ Each platform provider maps upstream output into:
 - `trace`: command/API attempts, elapsed time, skipped fallback reasons
 - `errors`: bounded, non-secret failure details
 
+## Implemented Slice and Verification Boundaries
+
+- YouTube uses yt-dlp's `requested_subtitles` and retrieves the selected JSON3
+  caption payload before reporting transcript content. `sub_lang` may select
+  languages; otherwise yt-dlp chooses its default language. Missing, empty or
+  unsupported captions fail this provider and continue the configured fallback.
+  Node is explicitly enabled alongside yt-dlp's default Deno runtime.
+- GitHub currently supports repository summaries and issue/PR bodies. A blob,
+  tree, release or other unsupported path must fall back instead of returning
+  a repository summary as if it were the requested document.
+- RSS/Atom paths such as `/feed`, `/rss`, `/atom`, `feed.xml`, `rss.xml`,
+  `atom.xml`, `.rss` and `.atom` prefer feedparser unless an explicit domain
+  route exists. Retrieval observes `timeout_seconds`; non-feed responses fail.
+  Feed discovery on arbitrary pages is not implemented.
+- Disabled providers never execute. Every extraction result observes
+  `max_chars` before scoring, trace creation and reporting.
+- V2EX currently reads topics and replies. Nodes/users, repository README
+  bodies, search-only integrations and session-backed platform adapters remain
+  future work. Their strategy/dependency entries are not runnable providers.
+- Doctor reports `implemented` separately from missing dependencies. With all
+  dependencies installed, absent implementations report `unimplemented` and
+  cannot make the overall status `ready`. A `ready` result checks implementation
+  presence and dependency availability only, not authentication or live health.
+- `bin/install --check` is read-only; `--check` and `--install` are mutually
+  exclusive. Installation returns nonzero on command failure or dependencies
+  still missing after rechecking, including manual-only prerequisites.
+- The runtime needs Python 3.11+ (or separately installed `tomli` on older
+  Python). Automated verification uses Python 3.11+; it does not require live
+  platform sessions. Network success is a separate smoke-test boundary.
+
 ## Open Questions
 
 - None

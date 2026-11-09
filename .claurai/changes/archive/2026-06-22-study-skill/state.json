@@ -1,0 +1,62 @@
+{
+  "name": "study-skill",
+  "status": "complete",
+  "phase": "Closed",
+  "created_at": "2026-06-19T01:30:02Z",
+  "updated_at": "2026-06-22T03:50:43Z",
+  "owner": "marco",
+  "base_branch": "main",
+  "branch": "main",
+  "pr": {
+    "number": "https://github.com/imarco/linky/pull/5",
+    "url": "https://github.com/imarco/linky/pull/5",
+    "state": "MERGED",
+    "mergedAt": "2026-06-22T03:45:52Z",
+    "mergeCommit": "6fc8e4e0acac9e9db58efeac55c58f86fc3564c5"
+  },
+  "feature_docs": [
+    "docs/features/study-skill.md"
+  ],
+  "test_docs": [
+    "docs/test-cases/study-skill.md"
+  ],
+  "testing_docs": [
+    "docs/testing/study-skill.md"
+  ],
+  "shared_docs": [
+    "docs/plans/roadmap.md",
+    "docs/plans/current-status.md"
+  ],
+  "ship": {
+    "status": "merged",
+    "delegate": "skill:ship",
+    "pr_number": "https://github.com/imarco/linky/pull/5",
+    "pr_url": "https://github.com/imarco/linky/pull/5",
+    "pr_state": "MERGED",
+    "merge_commit": "6fc8e4e0acac9e9db58efeac55c58f86fc3564c5",
+    "merged_at": "2026-06-22T03:45:52Z",
+    "checked_at": "2026-06-22T03:46:46Z"
+  },
+  "doc_release": {
+    "status": "passed",
+    "delegate": "skill:document-release",
+    "critical_debt_count": 0,
+    "common_debt_count": 0,
+    "evidence": "PR body contains full change summary; docs embedded in reference files and SKILL.md",
+    "last_run_at": "2026-06-22T03:46:22Z"
+  },
+  "plan_review": {
+    "status": "complete",
+    "depth": "full",
+    "delegate": "skill:autoplan",
+    "reviewed_at": "2026-06-19T02:19:12Z"
+  },
+  "last_handoff": {
+    "from": "Review",
+    "to": "Ship",
+    "sha": "c4c4ea2",
+    "note": "review clean (87/100), 5 findings fixed, 28/28 tests",
+    "recorded_at": "2026-06-22T03:42:29Z"
+  },
+  "closed_at": "2026-06-22T03:50:43Z"
+}

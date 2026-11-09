@@ -1,6 +1,6 @@
 # linky
 
-批量链接研究分析工具 —— Claude Code / Codex Skill。
+链接研究、学习与受控资源获取工具 —— Claude Code / Codex Skill。
 
 给一批 URL 或本地文本资料，自动归一化 source、提取正文、判断类型、按不同模板生成结构化分析报告。
 
@@ -23,6 +23,20 @@ GPT/Codex 之间的安全调用边界见 [`references/gpt-safe-contract.md`](ref
 - **多视角判断**：综合技术、产品、投资、内容创作视角给出独立判断和后续行动建议
 - **多种输出**：Notion / 单文件 Markdown / 多文件 Markdown / Prompt 模式（喂给其他 AI 平台）
 - **配置进化**：偏好和模板累积在 `~/.config/linky/`，越用越贴合个人需求
+
+## 下载与归档
+
+在保留 research / study 的基础上，`bin/linky-get` 可归档公开 PDF、官方课件、GitHub 文件/发行资源、文章配图，以及明确请求的公开直链媒体和已有字幕：
+
+```bash
+python3 bin/linky-get https://github.com/imarco/linky/blob/main/README.md --output ./resources
+python3 bin/linky-get https://example.org/article --article-images --output ./resources
+python3 bin/linky-get https://example.org/lecture.vtt --allow-media --output ./resources
+```
+
+每个文件有来源、时间、SHA-256 和状态清单；中断保留 `.partial`，受限即停。默认 50 MiB/文件、200 MiB/批次、20 项，拒绝私网地址、不安全跳转和路径越界。不自动读取凭据，不解压/执行下载物。媒体平台页面、播放列表和没有公开直链的资源目前不支持下载。下载层无需第三方依赖，要求 Python 3.11+ 和 Linux/macOS。
+
+完整范围、参数、状态和与 study 的衔接见 [resource-acquisition.md](references/resource-acquisition.md)。设计参考 download-anything，MIT 声明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。平台技能安装需另外通过其安全审核，仓库测试通过不代表已安装。
 
 ## 安装
 
@@ -56,7 +70,7 @@ https://dify.ai/
 仓库内置了默认的网页采集策略（`references/fetch-strategy.toml`），包含：
 
 - **降级链**：Jina Reader → Trafilatura → Scrapling + html2text → WebFetch → 浏览器自动化
-- **域名快捷路由**：微信公众号直接走 Scrapling（跳过 Jina），小红书走浏览器自动化等
+- **域名快捷路由**：微信公众号直接走 Scrapling（跳过 Jina），平台链接优先走对应 native provider
 - **正文选择器**：通用选择器 + 特定域名选择器覆盖
 - **html2text 参数**：保留链接、图片，不自动折行
 - **质量门禁与 trace**：低质量正文继续 fallback；本地 trace 默认写入 `.linky/runs/`
@@ -64,6 +78,10 @@ https://dify.ai/
 
 首次使用时会自动拷贝到 `~/.config/linky/fetch-strategy.toml`。
 你可以修改本地副本来自定义覆盖（比如添加新的域名路由、调整降级顺序），仓库更新不会覆盖你的自定义配置。
+
+平台型链接会优先走 Linky 原生 provider。已实现 YouTube 字幕(`yt-dlp`)、GitHub 仓库简介/issue/PR 正文(`gh`)、RSS/Atom(`feedparser`)、V2EX 主题与回复，以及既有 Twitter/X 公开 status(`vxTwitter`)。YouTube 无可读字幕、GitHub 不支持的子路径会记录失败并继续通用 fallback。Bilibili、OpenCLI、MCP、雪球和小宇宙等目前仅有策略与依赖目录，安装 CLI 不会使尚未实现的 provider 自动可用；doctor 会如实报告。
+
+这些 approach 来自对 Agent Reach 的安装说明和 channel 代码研究，但 Linky 不依赖 Agent Reach runtime，不调用 `agent-reach doctor` 或 `agent-reach install`。依赖检查和安全安装由 Linky 自己的 `bin/install` 与 `bin/linky-doctor` 负责。
 
 ## 架构
 

@@ -1,7 +1,8 @@
 ---
 name: linky
 description: >
-  批量链接研究分析工具。当用户提供一批 URL 链接并希望进行研究、分析、分类、摘要时触发。
+  链接研究、学习与公开资源获取工具。当用户提供 URL 希望研究、分析、分类、摘要、下载或归档时触发。
+  用户请求下载公开 PDF、官方课件、GitHub 文件/发行资源、文章配图，或明确要求公开媒体/已有字幕时，使用受控 acquisition 模式。
   适用场景包括：用户粘贴了一组链接要求分析、用户说"帮我研究这些链接"、用户分享了收藏夹/稍后阅读列表要求整理、
   用户要求对一批资源做情报分析或竞品调研、用户说"看看这些链接都是什么"。
   即使用户只给了 2-3 个链接，只要意图是"研究并产出结构化分析"而不是简单打开看看，就应该触发此技能。
@@ -48,6 +49,15 @@ Linky 是本地优先的研究流水线，不是线上服务。默认执行路�
 8. **Output adapter**：用脚本投递到 filesystem、Obsidian、Notion、Yinxiang 或 prompt 模式
 
 Firecrawl、Crawl4AI、GraphRAG、GPT Researcher 等项目只作为 `refs/` 下的本地架构参考。Firecrawl 不是默认 runtime dependency，除非用户未来显式配置对应 provider。
+
+## 模式路由：研究、学习或资源获取
+
+- **research**：研究、分类、摘要，继续下方原有流水线。
+- **study**：学习、深度阅读、知识卡片，使用既有 study 流水线。
+- **acquire**：用户明确要求下载、保存、归档资源时，先阅读 `references/resource-acquisition.md`，运行 `bin/linky-get`。这条分支不加载下方的用户配置、域名授权上下文或浏览器状态，不读取任何凭据，不调用研究模式的 fallback。
+- **acquire + study**：用户同时要求下载和学习时，只把 `complete` 且 hash 验证通过的本地文件交给现有 intake/study；保留 URL 与 manifest。
+
+获取前确认范围来自用户请求。配图只在请求覆盖时用 `--article-images`；公开媒体和已有字幕只在明确请求时用 `--allow-media`。遇到受限或安装扫描拒绝就停止，不使用 Sci-Hub、网盘转存、权限外数据或替代来源。下载后逐项报告 complete / partial / restricted 等状态与文件位置，不能只报成功数。
 
 ## 第一步：加载用户配置
 

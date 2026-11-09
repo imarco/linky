@@ -62,9 +62,13 @@ def matching_domain_route(url: str, strategy: dict[str, Any]) -> dict[str, Any] 
 
 
 def resolve_provider_chain(url: str, strategy: dict[str, Any]) -> list[str]:
-    chain = fallback_ids(strategy)
+    chain = [provider for provider in fallback_ids(strategy) if provider_config(strategy, provider).get("enabled", True)]
     route = matching_domain_route(url, strategy)
     if not route:
+        filename = urlparse(url).path.rstrip("/").rsplit("/", 1)[-1].lower()
+        feed = provider_config(strategy, "rss_feedparser")
+        if feed and feed.get("enabled", True) and (filename in {"feed", "rss", "atom", "feed.xml", "rss.xml", "atom.xml"} or filename.endswith((".rss", ".atom"))):
+            return ["rss_feedparser"] + [provider for provider in chain if provider != "rss_feedparser"]
         return chain
 
     skip = set(route.get("skip_layers", []))
@@ -74,6 +78,6 @@ def resolve_provider_chain(url: str, strategy: dict[str, Any]) -> list[str]:
     if go_to and go_to in filtered:
         start = filtered.index(go_to)
         return filtered[start:]
-    if go_to:
+    if go_to and provider_config(strategy, go_to).get("enabled", True):
         return [go_to] + [provider for provider in filtered if provider != go_to]
     return filtered
