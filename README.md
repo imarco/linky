@@ -1,6 +1,6 @@
 # linky
 
-批量链接研究分析工具 —— Claude Code / Codex Skill。
+链接研究、学习与受控资源获取工具 —— Claude Code / Codex Skill。
 
 给一批 URL 或本地文本资料，自动归一化 source、提取正文、判断类型、按不同模板生成结构化分析报告。
 
@@ -23,6 +23,20 @@ GPT/Codex 之间的安全调用边界见 [`references/gpt-safe-contract.md`](ref
 - **多视角判断**：综合技术、产品、投资、内容创作视角给出独立判断和后续行动建议
 - **多种输出**：Notion / 单文件 Markdown / 多文件 Markdown / Prompt 模式（喂给其他 AI 平台）
 - **配置进化**：偏好和模板累积在 `~/.config/linky/`，越用越贴合个人需求
+
+## 下载与归档
+
+在保留 research / study 的基础上，`bin/linky-get` 可归档公开 PDF、官方课件、GitHub 文件/发行资源、文章配图，以及明确请求的公开直链媒体和已有字幕：
+
+```bash
+python3 bin/linky-get https://github.com/imarco/linky/blob/main/README.md --output ./resources
+python3 bin/linky-get https://example.org/article --article-images --output ./resources
+python3 bin/linky-get https://example.org/lecture.vtt --allow-media --output ./resources
+```
+
+每个文件有来源、时间、SHA-256 和状态清单；中断保留 `.partial`，受限即停。默认 50 MiB/文件、200 MiB/批次、20 项，拒绝私网地址、不安全跳转和路径越界。不自动读取凭据，不解压/执行下载物。媒体平台页面、播放列表和没有公开直链的资源目前不支持下载。下载层无需第三方依赖，要求 Python 3.11+ 和 Linux/macOS。
+
+完整范围、参数、状态和与 study 的衔接见 [resource-acquisition.md](references/resource-acquisition.md)。设计参考 download-anything，MIT 声明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。平台技能安装需另外通过其安全审核，仓库测试通过不代表已安装。
 
 ## 安装
 

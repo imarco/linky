@@ -133,7 +133,8 @@ def v2ex_topic_to_markdown(topic: dict[str, Any]) -> tuple[str, dict[str, Any]]:
         for reply in replies:
             if not isinstance(reply, dict):
                 continue
-            author = reply.get("author") or reply.get("username") or "unknown"
+            reply_member = reply.get("member") if isinstance(reply.get("member"), dict) else {}
+            author = reply_member.get("username") or reply.get("author") or reply.get("username") or "unknown"
             body = str(reply.get("content") or "").strip()
             if body:
                 lines.append(f"- {author}: {body}")

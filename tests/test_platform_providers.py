@@ -75,13 +75,13 @@ class PlatformProviderParserTests(unittest.TestCase):
                 "member": {"username": "alice"},
                 "node": {"name": "python", "title": "Python"},
                 "replies": [
-                    {"author": "bob", "content": "Reply text with useful details. " * 4, "created": 1},
+                    {"member": {"username": "bob"}, "content": "Reply text with useful details. " * 4, "created": 1},
                 ],
             }
         )
 
         self.assertIn("# Python discussion", markdown)
-        self.assertIn("Reply text", markdown)
+        self.assertIn("- bob: Reply text", markdown)
         self.assertEqual(metadata["node_name"], "python")
 
     def test_clean_xhs_note_strips_redundant_fields(self):

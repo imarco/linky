@@ -1,55 +1,52 @@
+"""Behavior checks for the public download boundary.
+
+A previous keyword blacklist rejected explicit negative safety statements such
+as 'no cookies'. Documentation vocabulary is not a permission/security check.
+These tests constrain runtime behavior; installation still needs its independent
+platform security scan.
+"""
+import ast
+import os
+import sys
 import unittest
 from pathlib import Path
-
+from unittest.mock import MagicMock, patch
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / 'scripts'))
+from linky.safe_http import SafeHTTPClient
 
 
 class GPTSafeSurfaceTests(unittest.TestCase):
-    def test_install_surface_avoids_sensitive_implementation_language(self):
-        forbidden = [
-            "绕" + "过",
-            "规" + "避",
-            "穿" + "透",
-            "反" + "爬",
-            "Cloud" + "flare",
-            "document" + ".cookie",
-            "local" + "Storage",
-            "coo" + "kies",
-            "注入 " + "coo" + "kies",
-            "保存" + "凭据",
-            "anti" + "-bot",
-            "by" + "pass",
-        ]
-        roots = [
-            ROOT / ".gitignore",
-            ROOT / "SKILL.md",
-            ROOT / "README.md",
-            ROOT / "docs",
-            ROOT / "evals",
-            ROOT / "references",
-            ROOT / "scripts",
-            ROOT / "tests",
-        ]
-        checked_files = []
-        violations = []
+    def test_acquisition_has_no_shell_or_credential_discovery_apis(self):
+        forbidden_imports = {'subprocess', 'requests', 'netrc', 'keyring', 'http.cookiejar', 'urllib.request'}
+        forbidden_attributes = {'environ', 'getenv', 'expanduser', 'home', 'system', 'popen'}
+        for relative in ['scripts/linky/acquire.py', 'scripts/linky/safe_http.py']:
+            tree = ast.parse((ROOT / relative).read_text())
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    self.assertFalse(forbidden_imports.intersection(a.name for a in node.names), relative)
+                if isinstance(node, ast.ImportFrom):
+                    self.assertNotIn(node.module, forbidden_imports, relative)
+                if isinstance(node, ast.Attribute):
+                    self.assertNotIn(node.attr, forbidden_attributes, relative)
 
-        for root in roots:
-            paths = [root] if root.is_file() else sorted(root.rglob("*"))
-            for path in paths:
-                if not path.is_file():
-                    continue
-                if path.suffix not in {".md", ".toml", ".json", ".py", ".sh"}:
-                    continue
-                checked_files.append(path)
-                text = path.read_text(encoding="utf-8")
-                for term in forbidden:
-                    if term in text:
-                        violations.append(f"{path.relative_to(ROOT)} contains {term!r}")
+    def test_http_request_does_not_inherit_proxy_or_auth_environment(self):
+        conn = MagicMock()
+        conn.getresponse.return_value.status = 200
+        with patch.dict(os.environ, {'HTTPS_PROXY':'http://127.0.0.1:8888', 'GH_TOKEN':'secret', 'NETRC':'/private/auth'}), patch('linky.safe_http.resolve_public', return_value=(2,1,6,'',('93.184.216.34',443))), patch('linky.safe_http.PinnedHTTPSConnection', return_value=conn):
+            response = SafeHTTPClient().open('https://example.com/file')
+            response.close()
+        headers = conn.request.call_args.kwargs['headers']
+        self.assertEqual(set(headers), {'User-Agent', 'Accept-Encoding', 'Accept', 'Connection'})
+        self.assertNotIn('secret', str(conn.request.call_args))
+        self.assertEqual(conn.request.call_args.args[:2], ('GET', '/file'))
 
-        self.assertGreater(len(checked_files), 20)
-        self.assertEqual([], violations)
+    def test_download_skill_contract_is_explicit(self):
+        skill = (ROOT / 'SKILL.md').read_text()
+        self.assertIn('授权阅读边界', skill)
+        self.assertIn('references/gpt-safe-contract.md', skill)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()

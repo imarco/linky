@@ -49,6 +49,35 @@ class ProviderRegressionTests(unittest.TestCase):
                 with self.assertRaisesRegex(RuntimeError, "caption"):
                     _youtube_ytdlp_provider("https://youtu.be/demo", {}, {})
 
+    def test_github_repo_is_pinned_to_public_host(self):
+        with patch.dict("os.environ", {"GH_HOST": "enterprise.example"}), patch("linky.extract._run_json_command", return_value={"nameWithOwner": "a/b"}) as command:
+            result = _github_gh_provider("https://github.com/a/b", {}, {})
+        self.assertEqual(command.call_args.args[0][3], "github.com/a/b")
+        self.assertIn("# a/b", result["markdown"])
+
+    def test_github_issue_and_pr_dispatch_preserve_body_and_host(self):
+        for path, cli in (("issues", "issue"), ("pull", "pr")):
+            with self.subTest(path=path):
+                url = f"https://github.com/a/b/{path}/42"
+                payload = {"title": "Detailed discussion", "body": "Requested item body. " * 50, "url": url, "number": 42, "state": "OPEN", "author": {"login": "alice"}}
+                strategy = {"domain_routes": [{"pattern": "github.com", "go_to": "github_gh"}]}
+                with patch.dict("os.environ", {"GH_HOST": "enterprise.example"}), patch("linky.extract._run_json_command", return_value=payload) as command:
+                    result = extract_url(url, strategy=strategy)
+                self.assertEqual(result.provider, "github_gh")
+                self.assertIn(payload["body"].strip(), result.markdown)
+                self.assertEqual(result.metadata["author"], "alice")
+                self.assertEqual(command.call_args.args[0][:6], ["gh", cli, "view", "42", "--repo", "github.com/a/b"])
+
+    def test_youtube_doctor_requires_verified_solver(self):
+        report = doctor_report(
+            ROOT / "references/fetch-strategy.toml",
+            module_checker=lambda _: True, command_checker=lambda _: True,
+            config_checker=lambda _: False,
+        )
+        provider = next(p for p in report["providers"] if p["id"] == "youtube_ytdlp")
+        self.assertEqual(provider["status"], "missing")
+        self.assertIn("yt-dlp-ejs", provider["missing"])
+
     def test_github_unsupported_paths_do_not_return_repo_summary(self):
         for url in ("https://github.com/a/b/blob/main/file.py", "https://github.com/a/b/tree/main", "https://github.com/a/b/releases/tag/v1", "https://github.com/a/b/issues", "https://github.com/a/b/pull/not-a-number", "https://example.com/a/b"):
             with self.subTest(url=url), patch("linky.extract._run_json_command") as command:

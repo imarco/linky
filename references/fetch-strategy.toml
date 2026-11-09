@@ -120,8 +120,8 @@ name = "YouTube yt-dlp"
 method = "command-json"
 role = "transcript"
 best_for = "YouTube metadata, captions, subtitles, and transcript extraction"
-notes = "Uses yt-dlp requested_subtitles to fetch JSON3 caption text; optional sub_lang selects languages. Requires node or deno. Missing captions continue fallback."
-requires = ["yt-dlp", "node-or-deno"]
+notes = "Uses yt-dlp requested_subtitles to fetch JSON3 caption text; optional sub_lang selects languages. Requires node or deno and yt-dlp[default] EJS support. Doctor treats solver availability as unverified unless explicitly checked in the yt-dlp environment. Missing captions continue fallback."
+requires = ["yt-dlp", "node-or-deno", "yt-dlp-ejs"]
 
 [providers.github_gh]
 name = "GitHub gh CLI"

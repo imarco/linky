@@ -63,6 +63,30 @@ class InstallScriptTests(unittest.TestCase):
         self.assertIn("missing module: feedparser", output)
         run_mock.assert_not_called()
 
+    def test_check_requires_a_javascript_runtime(self):
+        for available in ({"yt-dlp"}, {"yt-dlp", "node"}, {"yt-dlp", "deno"}):
+            with self.subTest(available=available):
+                status, output, run = self.run_main(
+                    ["--check"], commands={"yt-dlp": self.globals["COMMANDS"]["yt-dlp"]},
+                    modules={}, available_commands=available,
+                )
+                self.assertEqual(status, 1 if len(available) == 1 else 0)
+                if len(available) == 1:
+                    self.assertIn("node-or-deno", output)
+                run.assert_not_called()
+
+    def test_default_ytdlp_install_includes_ejs_extras(self):
+        available = {"pipx", "node"}
+        def install(command, check=False):
+            available.add("yt-dlp")
+            return subprocess.CompletedProcess(command, 0)
+        status, _, run = self.run_main(
+            ["--install"], commands={"yt-dlp": self.globals["COMMANDS"]["yt-dlp"]},
+            modules={}, available_commands=available, run=install,
+        )
+        self.assertEqual(status, 0)
+        run.assert_called_once_with(["pipx", "install", "yt-dlp[default]"], check=False)
+
     def test_check_and_install_are_mutually_exclusive(self):
         with self.assertRaises(SystemExit) as raised:
             self.install["main"](["--check", "--install"])
@@ -175,7 +199,7 @@ class InstallScriptTests(unittest.TestCase):
             }
         }
         modules = {}
-        available_commands = {"pipx"}
+        available_commands = {"pipx", "node"}
 
         def successful_install(command, check=False):
             available_commands.add("yt-dlp")

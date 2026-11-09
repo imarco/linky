@@ -399,7 +399,7 @@ def _youtube_ytdlp_provider(url: str, provider: dict[str, Any], strategy: dict[s
 def _github_gh_provider(url: str, provider: dict[str, Any], strategy: dict[str, Any]) -> dict[str, Any]:
     timeout = int(strategy.get("global", {}).get("timeout_seconds", 15))
     owner, repo, kind, number = _github_parts(url)
-    repo_name = f"{owner}/{repo}"
+    repo_name = f"github.com/{owner}/{repo}"
     if kind == "pull":
         payload = _run_json_command(
             ["gh", "pr", "view", number, "--repo", repo_name, "--json", "title,body,url,author,number,state"],

@@ -8,7 +8,7 @@ import subprocess
 import sys
 
 COMMANDS = {
-    "yt-dlp": {"auto": ["pipx", "install", "yt-dlp"], "manual": "pipx install yt-dlp"},
+    "yt-dlp": {"auto": ["pipx", "install", "yt-dlp[default]"], "manual": "pipx install 'yt-dlp[default]'"},
     "gh": {"auto": None, "manual": "Install GitHub CLI with Homebrew or the official package manager."},
     "bili": {"auto": ["pipx", "install", "bilibili-cli"], "manual": "pipx install bilibili-cli"},
     "twitter": {"auto": ["pipx", "install", "twitter-cli"], "manual": "pipx install twitter-cli"},
@@ -43,8 +43,13 @@ def main(argv: list[str] | None = None) -> int:
     for name in missing_modules:
         print(f"missing module: {name} (auto)")
 
+    missing_runtime = "yt-dlp" in COMMANDS and not (shutil.which("node") or shutil.which("deno"))
+    if missing_runtime:
+        print("missing command: node-or-deno (manual; install Node.js or Deno from its official source)")
+    if "yt-dlp" in COMMANDS:
+        print("YouTube solver readiness is not verified by this dependency check. Install yt-dlp[default] for EJS support; use linky-doctor for provider requirements.")
     if args.check:
-        return 1 if missing_commands or missing_modules else 0
+        return 1 if missing_commands or missing_modules or missing_runtime else 0
 
     install_failed = False
     for name in missing_commands:
@@ -87,7 +92,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"still missing command: {name}")
     for name in remaining_modules:
         print(f"still missing module: {name}")
-    return 1 if install_failed or remaining_commands or remaining_modules else 0
+    remaining_runtime = "yt-dlp" in COMMANDS and not (shutil.which("node") or shutil.which("deno"))
+    return 1 if install_failed or remaining_commands or remaining_modules or remaining_runtime else 0
 
 
 def _module_available(name: str) -> bool:

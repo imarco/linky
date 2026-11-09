@@ -29,6 +29,7 @@ COMMAND_REQUIREMENTS = {
     "xhs",
 }
 CONFIG_REQUIREMENTS = {
+    "yt-dlp-ejs",
     "exa-mcp-config",
     "xiaohongshu-mcp-service",
     "linkedin-mcp-config",
