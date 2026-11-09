@@ -27,6 +27,15 @@ def public_source(env=None):
     return repository, commit
 
 
+def fixture_bytes(commit, name):
+    if not re.fullmatch(r'[0-9a-fA-F]{40}', commit) or name not in {'public.pdf', 'article.html', 'silence.wav', 'captions.vtt', 'image.png'}:
+        raise ValueError('invalid expected fixture reference')
+    # CI checkout includes both merge parents (fetch-depth: 2). Compare against
+    # the same source commit served remotely, never the potentially changed
+    # base/merge working-tree copy.
+    return subprocess.check_output(['git', 'show', f'{commit}:tests/fixtures/acquisition/{name}'], cwd=ROOT)
+
+
 def main():
     repository, commit = public_source()
     base = f'https://raw.githubusercontent.com/{repository}/{commit}/tests/fixtures/acquisition/'
@@ -48,8 +57,8 @@ def main():
             if hashlib.sha256(data).hexdigest() != result.sha256:
                 return 1
             if result.source_url.startswith(base):
-                local = ROOT/'tests/fixtures/acquisition'/result.source_url.rsplit('/',1)[-1]
-                if data != local.read_bytes():
+                name = result.source_url.rsplit('/', 1)[-1]
+                if data != fixture_bytes(commit, name):
                     return 1
         return 0
 

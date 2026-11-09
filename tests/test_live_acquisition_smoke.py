@@ -1,5 +1,7 @@
 import importlib.util
 import unittest
+import subprocess
+import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
@@ -22,3 +24,19 @@ class LiveSmokeSourceTests(unittest.TestCase):
         for repo, ref in [('https://evil.test/a','a'*40), ('../linky','a'*40), ('imarco/linky','main?token=x')]:
             with self.subTest(repo=repo, ref=ref), self.assertRaises(ValueError):
                 live_smoke.public_source({'ACQUISITION_SMOKE_REPOSITORY':repo,'ACQUISITION_SMOKE_REF':ref})
+
+    def test_fixture_comparison_reads_selected_commit_not_working_tree(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            subprocess.run(['git', 'init', '-q', str(root)], check=True)
+            subprocess.run(['git', '-C', str(root), 'config', 'user.name', 'Test'], check=True)
+            subprocess.run(['git', '-C', str(root), 'config', 'user.email', 'test@example.invalid'], check=True)
+            fixture = root/'tests/fixtures/acquisition/public.pdf'
+            fixture.parent.mkdir(parents=True)
+            fixture.write_bytes(b'PR head fixture')
+            subprocess.run(['git', '-C', str(root), 'add', '.'], check=True)
+            subprocess.run(['git', '-C', str(root), 'commit', '-qm', 'head fixture'], check=True)
+            head = subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True).strip()
+            fixture.write_bytes(b'base change present only in merged tree')
+            with patch.object(live_smoke, 'ROOT', root):
+                self.assertEqual(live_smoke.fixture_bytes(head, 'public.pdf'), b'PR head fixture')
