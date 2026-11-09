@@ -72,7 +72,7 @@ Firecrawl、Crawl4AI、GraphRAG、GPT Researcher 等项目只作为 `refs/` 下�
 - 如果存在本地域名授权上下文，读取可见页面处理偏好（详见「本地授权上下文」）
 - 如果存在 `domains/` 下的域名记忆文件，加载历史域名访问信息
 - 如果存在 `memory.md`，读取通用记忆（用户偏好、要求记住的事情、全局信息）
-- 如果不存在，运行 `scripts/init-config.sh` 初始化默认配置，并告知用户配置路径
+- 如果不存在，运行 `bin/init-config.sh` 初始化默认配置，并告知用户配置路径
 
 ### 域名知识加载
 

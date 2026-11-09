@@ -53,7 +53,7 @@ NotebookLM should not be part of the current implementation roadmap. Keep it as 
 
 ### Environment doctor
 
-The reference includes `install.sh` and `check_env.py` to verify Python, Playwright, markitdown, NotebookLM CLI, MCP files, and authentication. Linky would benefit from a lighter `scripts/linky_doctor.py` that checks only enabled providers and adapters from `references/fetch-strategy.toml` plus user config.
+The reference includes `install.sh` and `check_env.py` to verify Python, Playwright, markitdown, NotebookLM CLI, MCP files, and authentication. Linky would benefit from a lighter `bin/linky-doctor` that checks only enabled providers and adapters from `references/fetch-strategy.toml` plus user config.
 
 This should report capability states such as `ready`, `missing_dependency`, `needs_login`, `needs_user_browser`, and `disabled`, rather than trying to install everything eagerly.
 
