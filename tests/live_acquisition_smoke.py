@@ -1,34 +1,46 @@
-"""Explicit online smoke check. Not part of deterministic pytest collection.
+"""Explicit live smoke: public fixtures, release asset and no credentials.
 
-No secrets, authentication, mirrors, executables or browser sessions are used.
-Run only where direct public internet access is authorized.
+Not collected by pytest. Run only where direct public internet is authorized.
+A previously tested W3C URL returned HTTP 403; that is recorded as a restriction,
+not retried or replaced with another source for the same document.
 """
 import hashlib
 import json
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / 'scripts'))
 from linky.acquire import acquire_batch, Limits
-
-URLS = [
-    'https://github.com/imarco/linky/blob/main/README.md',
-    'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-]
 
 
 def main():
+    commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
+    base = f'https://raw.githubusercontent.com/imarco/linky/{commit}/tests/fixtures/acquisition/'
+    fixture_names = ['public.pdf', 'article.html', 'silence.wav', 'captions.vtt']
+    urls = [base+name for name in fixture_names] + [
+        f'https://github.com/imarco/linky/blob/{commit}/README.md',
+        'https://github.com/yt-dlp/yt-dlp/releases/download/2026.10.26/SHA2-256SUMS',
+    ]
     with tempfile.TemporaryDirectory(prefix='linky-public-smoke-') as output:
-        batch = acquire_batch(URLS, output, limits=Limits(max_bytes=2*1024*1024, max_total_bytes=4*1024*1024, max_files=2, max_seconds=40))
+        batch = acquire_batch(urls, output, allow_media=True, article_images=True,
+                              limits=Limits(max_bytes=2*1024*1024, max_total_bytes=8*1024*1024, max_files=8, max_seconds=40))
         print(json.dumps(batch.to_dict(), indent=2))
+        if batch.limited or len(batch.results) != 7:
+            return 1
         for result in batch.results:
             if result.status != 'complete':
                 return 1
             data = (Path(output) / result.path).read_bytes()
             if hashlib.sha256(data).hexdigest() != result.sha256:
                 return 1
-        return 0 if len(batch.results) == len(URLS) and not batch.limited else 1
+            if result.source_url.startswith(base):
+                local = ROOT/'tests/fixtures/acquisition'/result.source_url.rsplit('/',1)[-1]
+                if data != local.read_bytes():
+                    return 1
+        return 0
 
 if __name__ == '__main__':
     raise SystemExit(main())

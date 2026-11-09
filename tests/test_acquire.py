@@ -257,6 +257,17 @@ class AcquisitionTests(unittest.TestCase):
         self.assertEqual(result.status, 'needs_intent')
         self.assertEqual(response.stream.tell(), 0)
 
+    def test_github_html_file_can_be_archived_and_discover_images(self):
+        html = b'<html><img src="./image.png"></html>'
+        def open_url(url):
+            response = FakeResponse(body=html if url.endswith('.html') else b'\x89PNG\r\n\x1a\n'+b'x'*20, headers={'Content-Type':'text/plain' if url.endswith('.html') else 'image/png'})
+            response.url = url
+            return response
+        with patch('linky.safe_http.SafeHTTPClient.open', side_effect=open_url):
+            batch = acquire.acquire_batch(['https://raw.githubusercontent.com/a/b/main/article.html'], self.root, article_images=True)
+        self.assertEqual([r.status for r in batch.results], ['complete', 'complete'])
+        self.assertEqual(batch.results[1].kind, 'image')
+
     def test_cli_requires_url_and_exposes_bounds(self):
         proc = subprocess.run([sys.executable, str(ROOT/'bin/linky-get'), '--help'], capture_output=True, text=True)
         self.assertEqual(proc.returncode, 0)

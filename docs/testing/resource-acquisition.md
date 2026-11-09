@@ -6,7 +6,7 @@ Reused open PR #6 at `c4314bf142e191992d37701764b3a4493f1d9709` (base `b6d296a23
 
 ## Automated verification
 
-The initial acquisition plus PR corrections passed 146 pytest tests and 54 subtests with pytest 9.2.0/feedparser 6.0.14. `python -m compileall -q scripts bin`, CLI help commands and `git diff --check` passed. Final counts and exact published SHA should be taken from GitHub CI on the final revision.
+The initial acquisition plus PR corrections passed 147 pytest tests and 54 subtests with pytest 9.2.0/feedparser 6.0.14. `python -m compileall -q scripts bin`, CLI help commands and `git diff --check` passed. Final counts and exact published SHA should be taken from GitHub CI on the final revision.
 
 New tests cover:
 
@@ -22,6 +22,6 @@ Independent review identified boundary failures in early revisions; each was giv
 
 ## Live verification and limits
 
-The local execution environment could not resolve `raw.githubusercontent.com` or `www.w3.org`; both real CLI attempts correctly returned `error`, no artifact and no retry. This is not a live success claim. `tests/live_acquisition_smoke.py` is a separate, explicit online check in normal CI using a public GitHub README and a W3C PDF with byte/hash checks. It does not use secrets or browser state. Its actual outcome must be checked before declaring live acceptance.
+The local execution environment could not resolve `raw.githubusercontent.com` or `www.w3.org`; both real CLI attempts correctly returned `error`, no artifact and no retry. This is not a live success claim. `tests/live_acquisition_smoke.py` is a separate, explicit online check in normal CI using original public PDF/PNG/WAV/VTT/article fixtures, a GitHub README and a verified public release checksum asset, with byte/hash checks. The first CI live run completed the GitHub README (6,365 bytes, SHA-256 `aaa648a8c8c6ff5ace402c00287f4e5261ecf3d48c09739cf8f8958cb8ecabf5`), but W3C returned HTTP 403. That denial is recorded without fetching the same document elsewhere; subsequent smoke uses independent original test content. It does not use secrets or browser state. Its actual outcome must be checked before declaring live acceptance.
 
 Format verification is intentionally a MIME/signature screen and transfer accounting, not a full parser, decoder, malware scan or assertion of rights. Public direct media/subtitles are supported; platform page extraction/playlist/DRM/transcription is not. A host that requires proxy transport may reject direct DNS/socket access; Linky does not import ambient proxy credentials to compensate.

@@ -137,12 +137,12 @@ def _route(url):
                 raise RestrictedURL('ambiguous GitHub file path')
             # A URL using a branch name containing slashes must use a raw URL
             # or immutable commit URL; no ambient gh authentication is consulted.
-            return urlunsplit(('https', 'raw.githubusercontent.com', '/'+'/'.join(parts[:2]+parts[3:]), '', '')), 'github_file', suffix
+            return urlunsplit(('https', 'raw.githubusercontent.com', '/'+'/'.join(parts[:2]+parts[3:]), '', '')), 'web' if suffix in {'.html', '.htm'} else 'github_file', suffix
         if len(parts) >= 6 and parts[2:4] == ['releases', 'download']:
             return url, 'github_file', suffix
         return url, 'unsupported', suffix
     if host == 'raw.githubusercontent.com' or host == 'release-assets.githubusercontent.com':
-        return url, 'github_file', suffix
+        return url, 'web' if suffix in {'.html', '.htm'} else 'github_file', suffix
     if host in {'youtube.com', 'www.youtube.com', 'youtu.be', 'vimeo.com', 'www.bilibili.com', 'bilibili.com'} or suffix in PLAYLISTS:
         return url, 'unsupported', suffix
     if suffix in MEDIA:
@@ -359,7 +359,7 @@ def acquire_batch(urls, output_dir, *, allow_media=False, article_images=False, 
         result = acquire(url, output_dir, allow_media=allow_media, limits=per_file, parent_url=parent, expected_kind='image' if parent else None)
         batch.results.append(result)
         total += result.transferred_bytes
-        if article_images and parent is None and result.status == 'complete' and result.kind == 'web' and result.content_type == 'text/html':
+        if article_images and parent is None and result.status == 'complete' and result.kind == 'web' and (result.content_type == 'text/html' or Path(urlsplit(result.source_url).path).suffix.lower() in {'.html', '.htm'}):
             # Bound parser input separately from the document download budget.
             archive = ArchiveDirectory(output_dir)
             try:
